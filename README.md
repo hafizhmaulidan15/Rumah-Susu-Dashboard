@@ -115,13 +115,9 @@ src/
 
 ---
 
-## Screen
+## Screens
 
 - **Dashboard** — 4 kategori inventory dengan total stock per kategori
 - **Inventory Pages** — Tabel transaksi per kategori (susu, cup, plastik, box, tray)
 - **Add/Edit/Delete Dialogs** — Modal untuk CRUD operations
 - **PWA Install** — Install sebagai standalone app
-
----
-
-Dibuat dengan ❤️ untuk **Rumah Susu Indonesia Tasikmalaya**.
