@@ -16,6 +16,9 @@ const connectSrcDomains = [
     [
       "'self'",
       "https://raw.githubusercontent.com",
+      "https://script.google.com",
+      "https://script.googleusercontent.com",
+      "https://p.typekit.net",
       originOf("GRAPHQL_URL"),
       originOf("NEXT_PUBLIC_AUTH_URL"),
       isDev && "http://localhost:4000",
@@ -62,7 +65,7 @@ const securityHeaders = [
     // limiting potential vectors for cross-site scripting (XSS) attacks
     // by explicitly whitelisting trusted sources for various content types
     key: "Content-Security-Policy",
-    value: `default-src 'self'; worker-src blob: 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com; font-src 'self' data:; connect-src ${connectSrcDomains}; frame-ancestors 'none'; frame-src 'none'`,
+    value: `default-src 'self'; worker-src blob: 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com; font-src 'self' data: https://fonts.gstatic.com; connect-src ${connectSrcDomains}; frame-ancestors 'none'; frame-src 'none'`,
   },
   {
     // X-Frame-Options prevents our application from being embedded within iframes

@@ -1,4 +1,6 @@
 @theme {
+  /* Calendar colors for compatibility */
+  --color-calendarBorder: rgb(0, 0, 0, 0.15);
   /* Texts */
   --color-primaryText: rgb(0, 0, 0, 0.9);
   --color-secondaryText: rgb(0, 0, 0, 0.6);

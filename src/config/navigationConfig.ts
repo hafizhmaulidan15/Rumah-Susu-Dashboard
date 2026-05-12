@@ -1,184 +1,109 @@
-import { AnalyticsIcon } from "../assets/icons/AnalyticsIcon";
-import { BugIcon } from "../assets/icons/BugIcon";
-import { CalendarIcon } from "../assets/icons/CalendarIcon";
-import { DashboardIcon } from "../assets/icons/DashboardIcon";
-import { DonutIcon } from "../assets/icons/DonutIcon";
-import { EcommerceIcon } from "../assets/icons/EcommerceIcon";
-import { FormsIcon } from "../assets/icons/FormsIcon";
-import { PasswordIcon } from "../assets/icons/PasswordIcon";
-import { TablesIcon } from "../assets/icons/TablesIcon";
-import { UIElementsIcon } from "../assets/icons/UIElementsIcon";
-import { UserProfileIcon } from "../assets/icons/UserProfileIcon";
+import {
+  BoxIcon,
+  CupIcon,
+  DropletIcon,
+  LayersIcon,
+  LayoutGridIcon,
+  PackageIcon,
+  ScaleIcon,
+  WarehouseIcon,
+} from "../assets/icons/RSIIcons";
 import type { MenuConfigEntry } from "../components/layout/sideMenu/types";
 
-/**
- * Central navigation config used by SideMenu, SideMenuMobile and search input.
- */
 export const menuConfig: MenuConfigEntry[] = [
-  { type: "category", titleKey: "pages" },
+  { type: "category", titleKey: "inventory" },
   {
     type: "item",
-    titleKey: "dashboard",
-    Icon: DashboardIcon,
+    titleKey: "allStocks",
+    Icon: LayoutGridIcon,
     path: "/",
-    sections: [
-      { id: "revenueOverTime", titleKey: "revenueOverTime" },
-      { id: "bestsellingProducts", titleKey: "bestsellingProducts" },
-      { id: "customerSatisfaction", titleKey: "customerSatisfaction" },
-      { id: "revenuePerCountry", titleKey: "revenuePerCountry" },
+    sections: [{ id: "allStocks", titleKey: "allStocks" }],
+  },
+  {
+    type: "item",
+    titleKey: "susu",
+    Icon: DropletIcon,
+    path: "/susu",
+    sections: [{ id: "susu", titleKey: "susu" }],
+  },
+  {
+    type: "submenu",
+    titleKey: "cupProducts",
+    Icon: CupIcon,
+    submenuItems: [
+      {
+        titleKey: "susuCup",
+        path: "/susu-cup",
+        sections: [{ id: "susuCup", titleKey: "susuCup" }],
+      },
+      {
+        titleKey: "cup130ml",
+        path: "/cup-130ml",
+        sections: [{ id: "cup130ml", titleKey: "cup130ml" }],
+      },
+      {
+        titleKey: "cup175ml",
+        path: "/cup-175ml",
+        sections: [{ id: "cup175ml", titleKey: "cup175ml" }],
+      },
     ],
   },
   {
     type: "submenu",
-    titleKey: "eCommerce",
-    Icon: EcommerceIcon,
+    titleKey: "packaging",
+    Icon: LayersIcon,
     submenuItems: [
       {
-        titleKey: "orders",
-        path: "/orders",
-        sections: [{ id: "orders", titleKey: "orders" }],
+        titleKey: "plastikLogo2Line",
+        path: "/plastik-logo-2line",
+        sections: [{ id: "plastikLogo2Line", titleKey: "plastikLogo2Line" }],
       },
       {
-        titleKey: "customers",
-        path: "/customers",
-        sections: [{ id: "customers", titleKey: "customers" }],
+        titleKey: "plastikLogo4Line",
+        path: "/plastik-logo-4line",
+        sections: [{ id: "plastikLogo4Line", titleKey: "plastikLogo4Line" }],
       },
       {
-        titleKey: "products",
-        path: "/products",
-        sections: [{ id: "products", titleKey: "products" }],
+        titleKey: "plastikRollPolos",
+        path: "/plastik-roll-polos",
+        sections: [{ id: "plastikRollPolos", titleKey: "plastikRollPolos" }],
       },
-    ],
-  },
-  {
-    type: "item",
-    titleKey: "analytics",
-    Icon: AnalyticsIcon,
-    path: "/analytics",
-    sections: [
-      { id: "assetPerformance", titleKey: "assetPerformance" },
-      { id: "todaysSales", titleKey: "todaysSales" },
-      { id: "totalProfit", titleKey: "totalProfit" },
-      { id: "revenueTrends", titleKey: "revenueTrends" },
-      { id: "yearOverview", titleKey: "yearOverview" },
-      { id: "marketMetrics", titleKey: "marketMetrics" },
-      { id: "revenueDistribution", titleKey: "revenueDistribution" },
-    ],
-  },
-  {
-    type: "item",
-    titleKey: "userProfile",
-    Icon: UserProfileIcon,
-    path: "/profile",
-    sections: [
-      { id: "about", titleKey: "about" },
-      { id: "accountSettings", titleKey: "accountSettings" },
-      { id: "recentActivity", titleKey: "recentActivity" },
-    ],
-  },
-  {
-    type: "item",
-    titleKey: "calendar",
-    Icon: CalendarIcon,
-    path: "/calendar",
-    sections: [{ id: "calendar", titleKey: "calendar" }],
-  },
-  {
-    type: "submenu",
-    titleKey: "authentication",
-    Icon: PasswordIcon,
-    submenuItems: [
-      { titleKey: "userManagement", path: "/user-management" },
-      { titleKey: "login", path: "/login", newTab: true },
-      { titleKey: "register", path: "/register", newTab: true },
-      { titleKey: "forgotPassword", path: "/forgot-password", newTab: true },
+      {
+        titleKey: "plastikRollLogo",
+        path: "/plastik-roll-logo",
+        sections: [{ id: "plastikRollLogo", titleKey: "plastikRollLogo" }],
+      },
     ],
   },
   {
     type: "submenu",
-    titleKey: "errorPages",
-    Icon: BugIcon,
+    titleKey: "inventoryItems",
+    Icon: PackageIcon,
     submenuItems: [
-      { titleKey: "error401", path: "/error-401", newTab: true },
-      { titleKey: "error404", path: "/error-404", newTab: true },
-      { titleKey: "error500", path: "/error-500", newTab: true },
+      {
+        titleKey: "stockBoxTasik",
+        path: "/stock-box-tasik",
+        sections: [{ id: "stockBoxTasik", titleKey: "stockBoxTasik" }],
+      },
+      {
+        titleKey: "stockTrayTasik",
+        path: "/stock-tray-tasik",
+        sections: [{ id: "stockTrayTasik", titleKey: "stockTrayTasik" }],
+      },
     ],
   },
-  { type: "category", titleKey: "components" },
-  {
-    type: "item",
-    titleKey: "uiElements",
-    Icon: UIElementsIcon,
-    path: "/ui-elements",
-    sections: [
-      { id: "buttons", titleKey: "buttons" },
-      { id: "command", titleKey: "command" },
-      { id: "avatars", titleKey: "avatars" },
-      { id: "tooltips", titleKey: "tooltips" },
-      { id: "alerts", titleKey: "alerts" },
-      { id: "toasts", titleKey: "toasts" },
-      { id: "skeletons", titleKey: "skeletons" },
-      { id: "dialogs", titleKey: "dialogs" },
-      { id: "dropdownMenu", titleKey: "dropdownMenu" },
-      { id: "badges", titleKey: "badges" },
-      { id: "popover", titleKey: "popover" },
-      { id: "progress", titleKey: "progress" },
-      { id: "breadcrumbs", titleKey: "breadcrumbs" },
-      { id: "tabs", titleKey: "tabs" },
-      { id: "separators", titleKey: "separators" },
-      { id: "pagination", titleKey: "pagination" },
-    ],
-  },
-  {
-    type: "item",
-    titleKey: "forms",
-    Icon: FormsIcon,
-    path: "/forms",
-    sections: [
-      { id: "inputFields", titleKey: "inputFields" },
-      { id: "selectInputs", titleKey: "selectInputs" },
-      { id: "textarea", titleKey: "textarea" },
-      { id: "colorPicker", titleKey: "colorPicker" },
-      { id: "formValidation", titleKey: "formValidation" },
-      { id: "checkboxes", titleKey: "checkboxes" },
-      { id: "radioButtons", titleKey: "radioButtons" },
-      { id: "toggleSwitch", titleKey: "toggleSwitch" },
-      { id: "datePicker", titleKey: "datePicker" },
-      { id: "fileUpload", titleKey: "fileUpload" },
-      { id: "sliders", titleKey: "sliders" },
-    ],
-  },
-  {
-    type: "item",
-    titleKey: "tables",
-    Icon: TablesIcon,
-    path: "/tables",
-    sections: [
-      { id: "basicTable", titleKey: "basicTable" },
-      { id: "advancedTable", titleKey: "advancedTable" },
-      { id: "userTable", titleKey: "userTable" },
-      { id: "inventoryTable", titleKey: "inventoryTable" },
-    ],
-  },
-  {
-    type: "item",
-    titleKey: "charts",
-    Icon: DonutIcon,
-    path: "/charts",
-    sections: [
-      { id: "areaChart", titleKey: "areaChart" },
-      { id: "scatterChart", titleKey: "scatterChart" },
-      { id: "pieChart", titleKey: "pieChart" },
-      { id: "radarChart", titleKey: "radarChart" },
-      { id: "composedChart", titleKey: "composedChart" },
-      { id: "stackedBarChart", titleKey: "stackedBarChart" },
-      { id: "radialBarChart", titleKey: "radialBarChart" },
-      { id: "twoAxisLineChart", titleKey: "twoAxisLineChart" },
-      { id: "mixedLineChart", titleKey: "mixedLineChart" },
-      { id: "verticalBarChart", titleKey: "verticalBarChart" },
-      { id: "areaFillByValue", titleKey: "areaFillByValue" },
-      { id: "gradientPieChart", titleKey: "gradientPieChart" },
-      { id: "lineChart", titleKey: "lineChart" },
-    ],
-  },
+];
+
+export const RSI_SHEETS = [
+  { key: "summary", label: "All Stocks" },
+  { key: "susu", label: "Susu" },
+  { key: "susu cup", label: "Susu Cup" },
+  { key: "cup 130 ml", label: "Cup 130 ml" },
+  { key: "cup 175 ml", label: "Cup 175 ml" },
+  { key: "plastik logo 2 line", label: "Plastik Logo 2 Line" },
+  { key: "plastik logo 4 line", label: "Plastik Logo 4 Line" },
+  { key: "plastik roll logo", label: "Plastik Roll Logo" },
+  { key: "plastik roll polos", label: "Plastik Roll Polos" },
+  { key: "Stock Box Tasik", label: "Stock Box Tasik" },
+  { key: "Stock Tray Tasik", label: "Stock Tray Tasik" },
 ];

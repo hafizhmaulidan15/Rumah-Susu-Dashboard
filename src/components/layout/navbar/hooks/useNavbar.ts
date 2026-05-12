@@ -71,7 +71,7 @@ export const useNavbar = () => {
     setCurrentLanguage(getCurrentLanguage());
   }, []);
 
-  const selectTheme = (themeName: string) => {
+  const selectTheme = (themeName: "light" | "dark" | "system") => {
     setTheme(themeName);
   };
 

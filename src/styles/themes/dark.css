@@ -58,8 +58,17 @@
   --color-tabActiveBgHover: rgb(34, 38, 43);
   --color-revenueTabActiveBg: rgb(35, 38, 42);
   --color-revenueTabActiveBgHover: rgb(45, 48, 52);
-  --color-mainColor: rgb(61, 185, 133);
-  --color-progressIndicator: rgb(61, 185, 133);
+  /* RSI Gold Accent */
+  --color-primaryAccent: rgb(245, 158, 11);
+  --color-primaryAccentHover: rgb(234, 179, 8);
+
+  /* Overridden main color for RSI branding */
+  --color-mainColor: rgb(245, 158, 11);
+  --color-containedButtonBg: rgb(245, 158, 11);
+  --color-containedButtonBgHover: rgb(234, 179, 8);
+  --color-badgeDefaultBg: rgb(245, 158, 11);
+  --color-badgeDefaultBgHover: rgb(234, 179, 8);
+  --color-logoBg: rgb(245, 158, 11);
   --color-navigationBg: rgb(28, 32, 37);
   --color-navItemBg: rgb(12, 18, 24, 0);
   --color-navItemBgHover: rgb(255, 255, 255, 0.03);
@@ -201,6 +210,9 @@
   --color-roleViewerBadgeBorder: rgb(22, 163, 74, 0.3);
   --color-roleBannedBadgeBorder: rgb(220, 38, 38, 0.3);
   --color-roleDemoBannerBorder: rgb(255, 255, 255, 0.06);
+
+  /* Calendar colors (from light.css) */
+  --color-calendarBorder: rgb(255, 255, 255, 0.09);
 
   /* Shadows */
   --authModalShadow:

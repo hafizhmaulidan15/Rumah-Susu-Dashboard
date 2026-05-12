@@ -3,6 +3,8 @@
 import { ApolloProvider } from "@apollo/client/react";
 import { ThemeProvider } from "next-themes";
 
+import { usePWA } from "@/hooks/usePWA";
+
 import { TooltipProvider } from "../components/common/shadcn/tooltip";
 import { Layout } from "../components/layout/Layout";
 import { APP_DEFAULTS } from "../config/appDefaults";
@@ -21,6 +23,8 @@ export const THEMES_ARRAY = ["light", "dark"];
  * @see {@link https://github.com/pacocoursey/next-themes next-themes}
  */
 export const Providers = ({ children }: { children: React.ReactNode }) => {
+  usePWA();
+
   return (
     <ApolloProvider client={client}>
       <ThemeProvider

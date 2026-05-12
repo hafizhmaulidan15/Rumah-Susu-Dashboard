@@ -46,50 +46,47 @@ export default async function RootLayout({
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://demo.nellavio.com"),
+  metadataBase: new URL("https://dashboard.rumahsusuindonesia.com"),
   title: {
-    default: "Nellavio",
-    template: "%s | Nellavio",
+    default: "Rumah Susu Indonesia",
+    template: "%s | RSI",
   },
   description:
-    "Open source Next.js dashboard starter with auth, i18n, 18 pages, 60+ charts and 90+ UI components",
+    "Inventory dashboard for Rumah Susu Indonesia - real-time stock management with Google Sheets integration",
   keywords: [
+    "inventory dashboard",
+    "stock management",
+    "rumah susu indonesia",
+    "google sheets",
     "nextjs dashboard",
-    "react dashboard",
-    "admin template",
     "shadcn dashboard",
-    "open source dashboard",
-    "nextjs 16",
-    "typescript dashboard",
-    "tailwind dashboard",
-    "recharts",
-    "better auth",
-    "dashboard starter",
+    "typescript",
+    "tailwind",
   ],
-  authors: [{ name: "matt765", url: "https://github.com/matt765" }],
-  creator: "matt765",
+  authors: [{ name: "Rumah Susu Indonesia" }],
+  creator: "Rumah Susu Indonesia",
   openGraph: {
     type: "website",
-    locale: "en_US",
-    url: "https://demo.nellavio.com",
-    siteName: "Nellavio",
-    title: "Nellavio | Open Source Next.js Dashboard Starter",
+    locale: "id_ID",
+    url: "https://dashboard.rumahsusuindonesia.com",
+    siteName: "Rumah Susu Indonesia",
+    title: "Rumah Susu Indonesia | Inventory Dashboard",
     description:
-      "Open source Next.js dashboard starter with auth, i18n, 18 pages, 60+ charts and 90+ UI components",
+      "Inventory dashboard for Rumah Susu Indonesia - real-time stock management with Google Sheets integration",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Nellavio Dashboard Preview",
+        alt: "Rumah Susu Indonesia Dashboard",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nellavio | Open Source Next.js Dashboard Starter",
+    title: "Rumah Susu Indonesia | Inventory Dashboard",
     description:
-      "Open source Next.js dashboard starter with auth, i18n, 18 pages, 60+ charts and 90+ UI components",
+      "Inventory dashboard for Rumah Susu Indonesia - real-time stock management with Google Sheets integration",
     images: ["/og-image.png"],
   },
 };

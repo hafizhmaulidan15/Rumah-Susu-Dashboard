@@ -121,7 +121,7 @@ const printStartupBanner = async () => {
   const banner = [
     separator,
     "",
-    `Nellavio v${packageJson.version}`,
+    `Rumah Susu Indonesia v${packageJson.version}`,
     "",
     `📊 Environment: ${nodeEnv}`,
     `📦 Node: ${process.version}`,

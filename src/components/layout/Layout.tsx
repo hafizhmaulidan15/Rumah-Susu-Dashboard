@@ -3,7 +3,6 @@
 import { useTheme } from "next-themes";
 import { ReactNode, useEffect, useRef, useState } from "react";
 
-import { SettingsIcon } from "@/assets/icons/SettingsIcon";
 import { useFontManager } from "@/hooks/useFontManager";
 import { useGlobalHotkeys } from "@/hooks/useGlobalHotkeys";
 import { usePathname } from "@/i18n/navigation";
@@ -12,7 +11,6 @@ import { useLayoutStore } from "@/store/layoutStore";
 
 import { FullScreenLoader, LOADER_DURATION_MS } from "./FullScreenLoader";
 import { Navbar } from "./navbar/Navbar";
-import { SettingsDrawer } from "./settings/SettingsDrawer";
 import { SideMenu } from "./sideMenu/SideMenu";
 import { ToastContainer } from "./ToastContainer";
 
@@ -97,23 +95,6 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <>
-      {/* Fixed Settings Button - Desktop Only */}
-      {!isAuthPage && (
-        <div className="hidden xl:block fixed bottom-6 right-4 z-50">
-          <SettingsDrawer>
-            <button
-              tabIndex={0}
-              className="w-16 h-16 rounded-full border border-mainBorder bg-floatingMenuButtonBg hover:bg-floatingMenuButtonBgHover text-settingsIcon stroke-settingsIcon fill-settingsIcon shadow-lg flex items-center justify-center transition-colors cursor-pointer"
-              aria-label="Open settings"
-            >
-              <div className="w-7 h-7 flex items-center justify-center">
-                <SettingsIcon />
-              </div>
-            </button>
-          </SettingsDrawer>
-        </div>
-      )}
-
       <div className="flex min-h-screen w-full bg-secondaryBg overflow-x-hidden">
         {showLoader && !isAuthPage && (
           <FullScreenLoader key="static-loader-key" />

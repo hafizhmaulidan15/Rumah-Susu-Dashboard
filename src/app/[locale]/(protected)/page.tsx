@@ -1,25 +1,12 @@
-import { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
+"use client";
 
-import { PageWrapper } from "@/components/common/PageWrapper";
+import { RSIPageWrapper } from "@/components/common/RSIPageWrapper";
 import { HomepageView } from "@/components/views/homepage/HomepageView";
-import { getData } from "@/services/getData";
 
-const Home = async ({ params }: { params: Promise<{ locale: string }> }) => {
-  const { locale } = await params;
-  setRequestLocale(locale);
-
-  const homepageData = await getData("homepage");
-
+export default function Home() {
   return (
-    <PageWrapper pageName="Dashboard" dataForExport={homepageData}>
-      <HomepageView homepageData={homepageData} />
-    </PageWrapper>
+    <RSIPageWrapper>
+      <HomepageView />
+    </RSIPageWrapper>
   );
-};
-
-export const metadata: Metadata = {
-  title: { absolute: "Nellavio" },
-};
-
-export default Home;
+}
