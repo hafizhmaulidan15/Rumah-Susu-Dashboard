@@ -81,8 +81,9 @@ export const RSIInventoryView = ({
   const [editRow, setEditRow] = useState<InventoryRow | null>(null);
   const [deleteRow, setDeleteRow] = useState<InventoryRow | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "row", desc: true },
+  ]);
   const [searchQuery, setSearchQuery] = useState("");
   const t = useTranslations("pagination");
 
@@ -90,6 +91,7 @@ export const RSIInventoryView = ({
     {
       accessorKey: "row",
       header: "No",
+      sortingFn: "basic",
       cell: ({ row }) => (
         <span className="font-mono text-sm">{row.original.row}</span>
       ),
@@ -232,9 +234,11 @@ export const RSIInventoryView = ({
   const table = useReactTable({
     data: filteredData,
     columns,
-    state: { sorting, pagination },
+    state: { sorting },
     onSortingChange: setSorting,
-    onPaginationChange: setPagination,
+    initialState: {
+      pagination: { pageIndex: 0, pageSize: 10 },
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
