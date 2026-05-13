@@ -32,15 +32,19 @@ export const GOOGLE_SCRIPT_URL =
 
 export async function fetchGoogleSheetData(sheet: string = "susu") {
   const sheetName = SHEET_MAP[sheet] || sheet;
-  const url = `${GOOGLE_SCRIPT_URL}?sheet=${sheetName}`;
+  const url = `${GOOGLE_SCRIPT_URL}?sheet=${encodeURIComponent(sheetName)}`;
 
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Failed to fetch from script");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    if (!data || typeof data !== "object") {
+      console.warn("[RSI] Invalid response from GAS:", data);
+      return [];
+    }
+    return Array.isArray(data) ? data : [data];
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("[RSI] Fetch error:", error);
     return [];
   }
 }
@@ -59,8 +63,10 @@ export async function fetchAllSheetsSummary() {
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch");
-  return res.json();
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data) return [];
+  return Array.isArray(data) ? data : [data];
 };
 
 function getSheetCacheKey(sheet: string) {

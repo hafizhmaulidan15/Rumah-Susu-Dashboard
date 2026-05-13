@@ -61,6 +61,7 @@ export const EditDialog = ({
     return result;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isValid = !!formData.Tgl && formData.Net !== "";
 
   const handleChange = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -77,7 +78,13 @@ export const EditDialog = ({
           action: "edit",
           sheet: sheetKey,
           row: row.row,
-          ...formData,
+          Tgl: new Date(formData.Tgl).toISOString(),
+          In: formData.In === "" ? 0 : Number(formData.In),
+          Out: formData.Out === "" ? 0 : Number(formData.Out),
+          Net: Number(formData.Net),
+          Keterangan: formData.Keterangan || "-",
+          "Request By": formData["Request By"] || "-",
+          "No. SJ": formData["No. SJ"] || "-",
         }),
       });
       onSuccess();
@@ -115,7 +122,7 @@ export const EditDialog = ({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isValid}
             className="bg-mainColor hover:bg-mainColor/90 text-black"
           >
             {isSubmitting ? "Menyimpan..." : "Simpan"}

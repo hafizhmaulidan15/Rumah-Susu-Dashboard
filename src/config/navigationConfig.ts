@@ -1,12 +1,9 @@
 import {
-  BoxIcon,
   CupIcon,
   DropletIcon,
   LayersIcon,
   LayoutGridIcon,
   PackageIcon,
-  ScaleIcon,
-  WarehouseIcon,
 } from "../assets/icons/RSIIcons";
 import type { MenuConfigEntry } from "../components/layout/sideMenu/types";
 

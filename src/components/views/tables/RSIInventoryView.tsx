@@ -38,7 +38,9 @@ export interface InventoryRow {
   Out: number;
   Net: number;
   Keterangan: string;
-  [key: string]: unknown;
+  "Request By": string;
+  "No. SJ": string;
+  [key: string]: number | string;
 }
 
 interface RSIInventoryViewProps {
@@ -217,10 +219,19 @@ export const RSIInventoryView = ({
   ];
 
   const rawData: InventoryRow[] = Array.isArray(data)
-    ? data.map((r: any, idx: number) => ({
-        ...r,
-        row: r.row ?? r.row ?? idx + 1,
-      }))
+    ? data.map((r: Record<string, unknown>, idx: number): InventoryRow => {
+        const rowNum = r.row != null ? Number(r.row) : idx + 1;
+        return {
+          row: rowNum,
+          Tgl: String(r.Tgl ?? r.Tgl ?? ""),
+          In: Number(r.In ?? r.In ?? 0),
+          Out: Number(r.Out ?? r.Out ?? 0),
+          Net: Number(r.Net ?? r.Net ?? 0),
+          Keterangan: String(r.Keterangan ?? ""),
+          "Request By": String(r["Request By"] ?? "-"),
+          "No. SJ": String(r["No. SJ"] ?? "-"),
+        };
+      })
     : [];
 
   const filteredData = searchQuery
