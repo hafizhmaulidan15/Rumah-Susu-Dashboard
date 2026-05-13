@@ -128,13 +128,15 @@ export const AddDialog = ({
     }
   };
 
-  const isValid = formData.Tgl && formData.Net !== "";
+  const isValid =
+    !!formData.Tgl && formData.Net !== undefined && formData.Net !== "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Tambah {sheetLabel}</DialogTitle>
+          <p className="text-sm text-secondaryText">Unit: {sheetUnit}</p>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4 max-h-[60vh] overflow-y-auto">
           {ADD_FIELDS.map(({ key, label, type, placeholder }) => (

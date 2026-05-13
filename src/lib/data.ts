@@ -1,7 +1,6 @@
 import useSWR, { mutate as globalMutate } from "swr";
 
 export const SHEET_MAP: Record<string, string> = {
-  form: "form",
   susu: "susu",
   "susu cup": "susu cup",
   "cup 130 ml": "cup 130 ml",
@@ -139,13 +138,7 @@ export function invalidateAllCaches() {
 
 export function invalidateRelatedCaches(sheet: string) {
   invalidateSheetCache(sheet);
-  if (
-    sheet === "susu cup" ||
-    sheet === "cup 130 ml" ||
-    sheet === "cup 175 ml"
-  ) {
-    invalidateSummaryCache();
-  }
+  invalidateSummaryCache();
 }
 
 export function preloadData() {

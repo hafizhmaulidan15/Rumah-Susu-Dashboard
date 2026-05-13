@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 
 import {
@@ -33,12 +34,24 @@ const categoryColors: Record<string, string> = {
 };
 
 const getCategory = (key: string) => {
-  if (key === "susu") return "Susu";
-  if (key === "susu cup") return "Susu";
+  if (key === "susu" || key === "susu cup") return "Susu";
   if (key === "cup 130 ml" || key === "cup 175 ml") return "Cup Products";
-  if (key.includes("plastik") || key.includes("box") || key.includes("tray"))
-    return "Packaging";
+  if (key.includes("plastik")) return "Packaging";
+  if (key.includes("box") || key.includes("tray")) return "Inventory Items";
   return "Inventory Items";
+};
+
+const sheetToUrl: Record<string, string> = {
+  susu: "/susu",
+  "susu cup": "/susu-cup",
+  "cup 130 ml": "/cup-130ml",
+  "cup 175 ml": "/cup-175ml",
+  "plastik logo 2 line": "/plastik-logo-2line",
+  "plastik logo 4 line": "/plastik-logo-4line",
+  "plastik roll logo": "/plastik-roll-logo",
+  "plastik roll polos": "/plastik-roll-polos",
+  "Stock Box Tasik": "/stock-box-tasik",
+  "Stock Tray Tasik": "/stock-tray-tasik",
 };
 
 const getStock = (summary: SummaryItem[], key: string): number => {
@@ -116,9 +129,9 @@ export const RSIDashboardView = () => {
                     (s) => s.name.toLowerCase() === sheet.key.toLowerCase(),
                   );
                   return (
-                    <a
+                    <Link
                       key={sheet.key}
-                      href={`/${sheet.key.replace(/ /g, "-").replace(/_/g, "-")}`}
+                      href={sheetToUrl[sheet.key] || "/susu"}
                       className="group flex items-center justify-between p-4 rounded-xl border border-cardBorder hover:border-mainColor/50 hover:bg-mainColor/5 transition-all duration-200"
                     >
                       <div>
@@ -145,7 +158,7 @@ export const RSIDashboardView = () => {
                           </>
                         )}
                       </div>
-                    </a>
+                    </Link>
                   );
                 })}
               </div>
@@ -162,9 +175,9 @@ export const RSIDashboardView = () => {
             </div>
             <div className="p-4 flex flex-col gap-2">
               {SHEETS.slice(1, 5).map((sheet) => (
-                <a
+                <Link
                   key={sheet.key}
-                  href={`/${sheet.key.replace(/ /g, "-").replace(/_/g, "-")}`}
+                  href={sheetToUrl[sheet.key] || "/susu"}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-mainColor/5 border border-transparent hover:border-cardBorder transition-all"
                 >
                   <div className="w-8 h-8 rounded-lg bg-mainColor/10 flex items-center justify-center">
@@ -176,7 +189,7 @@ export const RSIDashboardView = () => {
                     </p>
                     <p className="text-xs text-secondaryText">{sheet.unit}</p>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           </Card>
