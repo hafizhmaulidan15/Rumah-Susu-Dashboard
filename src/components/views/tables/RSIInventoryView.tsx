@@ -9,9 +9,9 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Edit, Plus, Search, Trash2 } from "lucide-react";
+import { Download, Edit, Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { ArrowDownIcon } from "@/assets/icons/ArrowDownIcon";
 import { ArrowUpIcon } from "@/assets/icons/ArrowUpIcon";
@@ -87,7 +87,59 @@ export const RSIInventoryView = ({
     { id: "row", desc: true },
   ]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
   const t = useTranslations("pagination");
+
+  const handleExportPDF = useCallback(async () => {
+    if (!data || !Array.isArray(data) || !data.length) return;
+    setIsExporting(true);
+    try {
+      const { pdf } = await import("@react-pdf/renderer");
+      const { InventoryPDF } =
+        await import("@/components/common/pdf/InventoryPDF");
+      const exportDate = new Date().toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const exportRows: InventoryRow[] = data.map(
+        (r: Record<string, unknown>, idx: number): InventoryRow => ({
+          row: r.row != null ? Number(r.row) : idx + 1,
+          Tgl: String(r.Tgl ?? ""),
+          In: Number(r.In ?? 0),
+          Out: Number(r.Out ?? 0),
+          Net: Number(r.Net ?? 0),
+          Keterangan: String(r.Keterangan ?? ""),
+          "Request By": String(r["Request By"] ?? "-"),
+          "No. SJ": String(r["No. SJ"] ?? "-"),
+        }),
+      );
+      const blob = await pdf(
+        <InventoryPDF
+          data={{
+            rows: exportRows,
+            sheetLabel,
+            sheetUnit,
+            exportDate,
+          }}
+        />,
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `RSI-${sheetLabel.replace(/ /g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [data, sheetLabel, sheetUnit]);
 
   const columns: ColumnDef<InventoryRow>[] = [
     {
@@ -257,20 +309,33 @@ export const RSIInventoryView = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-primaryText">
             {sheetLabel}
           </h2>
           <p className="text-sm text-secondaryText mt-1">Unit: {sheetUnit}</p>
         </div>
-        <Button
-          onClick={() => setAddOpen(true)}
-          className="gap-2 bg-mainColor hover:bg-mainColor/90 text-black"
-        >
-          <Plus className="h-4 w-4" />
-          Tambah
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            disabled={
+              isExporting || !data || !Array.isArray(data) || !data.length
+            }
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? "Memuat..." : "Export PDF"}
+          </Button>
+          <Button
+            onClick={() => setAddOpen(true)}
+            className="gap-2 bg-mainColor hover:bg-mainColor/90 text-black"
+          >
+            <Plus className="h-4 w-4" />
+            Tambah
+          </Button>
+        </div>
       </div>
 
       <Card>
