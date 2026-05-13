@@ -5,7 +5,6 @@
 @import "./themes/authBgPattern.css";
 @import "./overrides/calendar.css";
 @import "./overrides/datepicker.css";
-@import "./overrides/lightbox.css";
 
 /* Custom breakpoints */
 @theme {
@@ -134,13 +133,6 @@ body.font-alternative {
 .animate-navbar-dropdown {
   animation: navbarDropdownEnter 150ms ease-out forwards;
   transform: translateZ(0);
-}
-
-/* Font color for axis ticks in Recharts charts */
-.recharts-cartesian-axis-tick-value tspan,
-.recharts-polar-angle-axis-tick-value tspan,
-.recharts-cartesian-axis-tick text {
-  fill: var(--color-chartAxisText);
 }
 
 /* Global accessible focus styles - in @layer base so Tailwind utilities

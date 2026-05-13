@@ -19,7 +19,6 @@ const connectSrcDomains = [
       "https://script.google.com",
       "https://script.googleusercontent.com",
       "https://p.typekit.net",
-      originOf("GRAPHQL_URL"),
       originOf("NEXT_PUBLIC_AUTH_URL"),
       isDev && "http://localhost:4000",
     ].filter(Boolean),
@@ -31,7 +30,7 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
-  transpilePackages: ["@react-pdf/renderer"],
+  transpilePackages: [],
   typescript: {
     ignoreBuildErrors: false,
   },

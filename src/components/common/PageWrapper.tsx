@@ -23,17 +23,7 @@ interface PageConfig {
 
 const PAGE_CONFIG: Record<string, PageConfig> = {
   Dashboard: { layoutType: "dashboard", breadcrumbCategory: "default" },
-  Analytics: { layoutType: "content", breadcrumbCategory: "default" },
-  Profile: { layoutType: "content", breadcrumbCategory: "default" },
-  Orders: { layoutType: "table", breadcrumbCategory: "ecommerce" },
-  Customers: { layoutType: "table", breadcrumbCategory: "ecommerce" },
-  Products: { layoutType: "table", breadcrumbCategory: "ecommerce" },
-  Calendar: { layoutType: "table", breadcrumbCategory: "default" },
-  Charts: { layoutType: "content", breadcrumbCategory: "components" },
-  "UI Elements": { layoutType: "content", breadcrumbCategory: "components" },
-  Forms: { layoutType: "content", breadcrumbCategory: "components" },
   Tables: { layoutType: "content", breadcrumbCategory: "components" },
-  "User Management": { layoutType: "table", breadcrumbCategory: "default" },
 };
 
 const DEFAULT_PAGE_CONFIG: PageConfig = {

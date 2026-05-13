@@ -9,6 +9,7 @@ import { CONTENT_MAX_WIDTH } from "../Layout";
 import { Logo } from "../sideMenu/parts/Logo";
 import { SideMenuMobile } from "../sideMenu/SideMenuMobile";
 import { useNavbar } from "./hooks/useNavbar";
+import { FloatingMenuButton } from "./parts/FloatingMenuButton";
 import { SearchInput } from "./parts/SearchInput";
 import { ThemeButton } from "./parts/ThemeButton";
 
@@ -96,6 +97,10 @@ export const Navbar = () => {
         </div>
       </header>
       <SideMenuMobile isMobileMenuOpen={isMobileMenuOpen} />
+      <FloatingMenuButton
+        isMobileMenuOpen={isMobileMenuOpen}
+        toggleMobileMenu={toggleMobileMenu}
+      />
     </>
   );
 };

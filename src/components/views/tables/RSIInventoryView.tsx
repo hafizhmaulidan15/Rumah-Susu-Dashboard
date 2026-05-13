@@ -6,12 +6,13 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  PaginationState,
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ArrowDownIcon } from "@/assets/icons/ArrowDownIcon";
 import { ArrowUpIcon } from "@/assets/icons/ArrowUpIcon";
@@ -73,14 +74,19 @@ export const RSIInventoryView = ({
   const [deleteRow, setDeleteRow] = useState<InventoryRow | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "row", desc: true },
+    { id: "rowNum", desc: true },
   ]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const t = useTranslations("pagination");
 
   const columns: ColumnDef<InventoryRow>[] = [
     {
-      accessorKey: "row",
+      id: "rowNum",
+      accessorFn: (originalRow) => originalRow.row,
       header: "No",
       sortingFn: "basic",
       cell: ({ row }) => (
@@ -207,38 +213,44 @@ export const RSIInventoryView = ({
     },
   ];
 
-  const rawData: InventoryRow[] = Array.isArray(data)
-    ? data.map((r: Record<string, unknown>, idx: number): InventoryRow => {
-        const rowNum = r.row != null ? Number(r.row) : idx + 1;
-        return {
-          row: rowNum,
-          Tgl: String(r.Tgl ?? ""),
-          In: Number(r.In ?? 0),
-          Out: Number(r.Out ?? 0),
-          Net: Number(r.Net ?? 0),
-          Keterangan: String(r.Keterangan ?? ""),
-          "Request By": String(r["Request By"] ?? "-"),
-          "No. SJ": String(r["No. SJ"] ?? "-"),
-        };
-      })
-    : [];
+  const rawData: InventoryRow[] = useMemo(
+    () =>
+      Array.isArray(data)
+        ? data.map((r: Record<string, unknown>, idx: number): InventoryRow => {
+            const rowNum = r.row != null ? Number(r.row) : idx + 1;
+            return {
+              row: rowNum,
+              Tgl: String(r.Tgl ?? ""),
+              In: Number(r.In ?? 0),
+              Out: Number(r.Out ?? 0),
+              Net: Number(r.Net ?? 0),
+              Keterangan: String(r.Keterangan ?? ""),
+              "Request By": String(r["Request By"] ?? "-"),
+              "No. SJ": String(r["No. SJ"] ?? "-"),
+            };
+          })
+        : [],
+    [data],
+  );
 
-  const filteredData = searchQuery
-    ? rawData.filter((row) =>
-        Object.values(row).some((val) =>
-          String(val).toLowerCase().includes(searchQuery.toLowerCase()),
-        ),
-      )
-    : rawData;
+  const filteredData = useMemo(
+    () =>
+      searchQuery
+        ? rawData.filter((row) =>
+            Object.values(row).some((val) =>
+              String(val).toLowerCase().includes(searchQuery.toLowerCase()),
+            ),
+          )
+        : rawData,
+    [rawData, searchQuery],
+  );
 
   const table = useReactTable({
     data: filteredData,
     columns,
-    state: { sorting },
+    state: { sorting, pagination },
     onSortingChange: setSorting,
-    initialState: {
-      pagination: { pageIndex: 0, pageSize: 10 },
-    },
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

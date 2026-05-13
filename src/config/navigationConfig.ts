@@ -90,17 +90,3 @@ export const menuConfig: MenuConfigEntry[] = [
     ],
   },
 ];
-
-export const RSI_SHEETS = [
-  { key: "summary", label: "All Stocks" },
-  { key: "susu", label: "Susu" },
-  { key: "susu cup", label: "Susu Cup" },
-  { key: "cup 130 ml", label: "Cup 130 ml" },
-  { key: "cup 175 ml", label: "Cup 175 ml" },
-  { key: "plastik logo 2 line", label: "Plastik Logo 2 Line" },
-  { key: "plastik logo 4 line", label: "Plastik Logo 4 Line" },
-  { key: "plastik roll logo", label: "Plastik Roll Logo" },
-  { key: "plastik roll polos", label: "Plastik Roll Polos" },
-  { key: "Stock Box Tasik", label: "Stock Box Tasik" },
-  { key: "Stock Tray Tasik", label: "Stock Tray Tasik" },
-];
