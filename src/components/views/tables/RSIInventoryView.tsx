@@ -9,9 +9,17 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Download, Edit, Plus, Search, Trash2 } from "lucide-react";
+import {
+  Download,
+  Edit,
+  FileSpreadsheet,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
+import * as XLSX from "xlsx";
 
 import { ArrowDownIcon } from "@/assets/icons/ArrowDownIcon";
 import { ArrowUpIcon } from "@/assets/icons/ArrowUpIcon";
@@ -49,17 +57,6 @@ interface RSIInventoryViewProps {
   sheetUnit: string;
 }
 
-const COLUMN_LABELS: Record<string, string> = {
-  row: "No",
-  Tgl: "Tanggal",
-  In: "Masuk",
-  Out: "Keluar",
-  Net: "Stock",
-  Keterangan: "Keterangan",
-  "Request By": "Request By",
-  "No. SJ": "No. SJ",
-};
-
 const SortingArrow = ({ isSorted }: { isSorted: false | "asc" | "desc" }) => {
   if (!isSorted)
     return <div className="inline-flex w-4 h-4 ml-1 flex-shrink-0" />;
@@ -79,7 +76,7 @@ export const RSIInventoryView = ({
   sheetLabel,
   sheetUnit,
 }: RSIInventoryViewProps) => {
-  const { data, isLoading, isError, mutate } = useSheetData(sheetKey);
+  const { data, isLoading, mutate } = useSheetData(sheetKey);
   const [editRow, setEditRow] = useState<InventoryRow | null>(null);
   const [deleteRow, setDeleteRow] = useState<InventoryRow | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -89,6 +86,37 @@ export const RSIInventoryView = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const t = useTranslations("pagination");
+
+  const handleExportXLSX = useCallback(() => {
+    if (!data || !Array.isArray(data) || !data.length) return;
+    const exportRows = data.map((r: Record<string, unknown>, idx: number) => ({
+      No: r.row != null ? Number(r.row) : idx + 1,
+      Tanggal: r.Tgl ? String(r.Tgl) : "",
+      Masuk: Number(r.In ?? 0),
+      Keluar: Number(r.Out ?? 0),
+      Stock: Number(r.Net ?? 0),
+      Keterangan: String(r.Keterangan ?? "-"),
+      "Request By": String(r["Request By"] ?? "-"),
+      "No. SJ": String(r["No. SJ"] ?? "-"),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    worksheet["!cols"] = [
+      { wch: 5 },
+      { wch: 14 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 15 },
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetLabel);
+    XLSX.writeFile(
+      workbook,
+      `RSI-${sheetLabel.replace(/ /g, "-")}-${new Date().toISOString().split("T")[0]}.xlsx`,
+    );
+  }, [data, sheetLabel]);
 
   const handleExportPDF = useCallback(async () => {
     if (!data || !Array.isArray(data) || !data.length) return;
@@ -202,7 +230,7 @@ export const RSIInventoryView = ({
     },
     {
       accessorKey: "Net",
-      header: `Stock`,
+      header: "Stock",
       cell: ({ row }) => {
         const val = row.original.Net;
         if (val === undefined || val === null)
@@ -275,10 +303,10 @@ export const RSIInventoryView = ({
         const rowNum = r.row != null ? Number(r.row) : idx + 1;
         return {
           row: rowNum,
-          Tgl: String(r.Tgl ?? r.Tgl ?? ""),
-          In: Number(r.In ?? r.In ?? 0),
-          Out: Number(r.Out ?? r.Out ?? 0),
-          Net: Number(r.Net ?? r.Net ?? 0),
+          Tgl: String(r.Tgl ?? ""),
+          In: Number(r.In ?? 0),
+          Out: Number(r.Out ?? 0),
+          Net: Number(r.Net ?? 0),
           Keterangan: String(r.Keterangan ?? ""),
           "Request By": String(r["Request By"] ?? "-"),
           "No. SJ": String(r["No. SJ"] ?? "-"),
@@ -319,11 +347,20 @@ export const RSIInventoryView = ({
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={handleExportPDF}
-            disabled={
-              isExporting || !data || !Array.isArray(data) || !data.length
-            }
+            onClick={handleExportXLSX}
             className="gap-2"
+            title="Export ke Excel"
+            disabled={!data || !Array.isArray(data) || !data.length}
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Export XLSX
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="gap-2"
+            title="Export ke PDF"
           >
             <Download className="h-4 w-4" />
             {isExporting ? "Memuat..." : "Export PDF"}
