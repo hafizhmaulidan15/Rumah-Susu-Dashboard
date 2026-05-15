@@ -95,15 +95,35 @@ const sheetToUrl: Record<string, string> = {
   "Stock Tray Tasik": "/stock-tray-tasik",
 };
 
-const LOW_STOCK_THRESHOLD = 1000;
+/** Per-item low-stock limits (liter/pcs) — avoids false "Critical" on high-volume SKUs. */
+const LOW_STOCK_THRESHOLDS: Record<string, number> = {
+  susu: 500,
+  "susu cup": 5_000,
+  "cup 130 ml": 10_000,
+  "cup 175 ml": 5_000,
+  "plastik logo 2 line": 5,
+  "plastik logo 4 line": 5,
+  "plastik roll logo": 10,
+  "plastik roll polos": 2,
+  "Stock Box Tasik": 10,
+  "Stock Tray Tasik": 10,
+};
+
+function isLowStock(key: string, stock: number): boolean {
+  const threshold = LOW_STOCK_THRESHOLDS[key] ?? 1000;
+  return stock < threshold;
+}
 
 export const RSIDashboardView = () => {
   const format = useFormatter();
   const {
     stockMap = {},
     isLoading: isStocksLoading,
+    isError: isStocksError,
     mutate: mutateStocks,
   } = useLatestSheetStocksMap();
+  const showStocksPending =
+    isStocksLoading && Object.keys(stockMap).length === 0;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
@@ -134,15 +154,8 @@ export const RSIDashboardView = () => {
   // Data processing with safe Number conversion
   const allStockItems = useMemo(() => {
     return SHEETS.filter((s) => s.key !== "summary").map((sheet) => {
-      let stock = 0;
-      if (sheet.key === "susu cup") {
-        stock =
-          (Number(stockMap["cup 130 ml"]) || 0) +
-          (Number(stockMap["cup 175 ml"]) || 0);
-      } else {
-        stock = Number(stockMap[sheet.key]) || 0;
-      }
-      return { ...sheet, stock, isLow: stock < LOW_STOCK_THRESHOLD };
+      const stock = Number(stockMap[sheet.key]) || 0;
+      return { ...sheet, stock, isLow: isLowStock(sheet.key, stock) };
     });
   }, [stockMap]);
 
@@ -170,8 +183,7 @@ export const RSIDashboardView = () => {
   );
 
   const totalStockValue = useMemo(() => {
-    return Object.entries(stockMap).reduce((sum, [key, val]) => {
-      if (key === "susu cup") return sum;
+    return Object.values(stockMap).reduce((sum, val) => {
       const n = Number(val);
       return sum + (isNaN(n) ? 0 : n);
     }, 0);
@@ -179,8 +191,15 @@ export const RSIDashboardView = () => {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12 animate-in fade-in duration-700">
+      {isStocksError && Object.keys(stockMap).length === 0 && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400">
+          Gagal memuat data dari Google Sheets. Coba Refresh atau periksa
+          koneksi / URL script di environment Vercel.
+        </div>
+      )}
+
       {/* HEADER: Dynamic & Professional */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-primaryBg p-6 rounded-3xl border border-mainBorder shadow-sm">
         <div className="flex items-center gap-4">
           <div className="bg-mainColor p-3 rounded-2xl shadow-lg shadow-mainColor/20">
             <LayoutDashboard className="w-6 h-6 text-white" />
@@ -241,7 +260,7 @@ export const RSIDashboardView = () => {
               Total Warehouse Stock
             </p>
             <h3 className="text-4xl font-black tabular-nums">
-              {isStocksLoading ? "---" : format.number(totalStockValue)}
+              {showStocksPending ? "---" : format.number(totalStockValue)}
             </h3>
             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-mainColor">
               <Zap className="w-3 h-3 fill-current" /> Live from Google Sheets
@@ -340,7 +359,7 @@ export const RSIDashboardView = () => {
                           <span
                             className={`text-sm font-black tabular-nums ${item.isLow ? "text-red-500" : "text-zinc-900 dark:text-white"}`}
                           >
-                            {isStocksLoading
+                            {showStocksPending
                               ? "---"
                               : format.number(item.stock)}
                           </span>

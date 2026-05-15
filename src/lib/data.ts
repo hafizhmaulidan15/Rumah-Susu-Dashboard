@@ -1,66 +1,15 @@
 import useSWR, { mutate as globalMutate } from "swr";
 
-export const SHEET_MAP: Record<string, string> = {
-  susu: "susu",
-  "susu cup": "susu cup",
-  "cup 130 ml": "cup 130 ml",
-  "cup 175 ml": "cup 175 ml",
-  "plastik logo 2 line": "plastik logo 2 line",
-  "plastik logo 4 line": "plastik logo 4 line",
-  "plastik roll logo": "plastik roll logo",
-  "plastik roll polos": "plastik roll polos",
-  "Stock Box Tasik": "Stock Box Tasik",
-  "Stock Tray Tasik": "Stock Tray Tasik",
-};
+import { GOOGLE_SCRIPT_URL, SHEET_MAP } from "@/lib/googleSheets";
 
-export const SHEETS = [
-  { key: "summary", label: "All Stocks", unit: "" },
-  { key: "susu", label: "Susu", unit: "Liter" },
-  { key: "susu cup", label: "Susu Cup", unit: "Pcs" },
-  { key: "cup 130 ml", label: "Cup 130 ml", unit: "Pcs" },
-  { key: "cup 175 ml", label: "Cup 175 ml", unit: "Pcs" },
-  { key: "plastik logo 2 line", label: "Plastik Logo 2 Line", unit: "Pcs" },
-  { key: "plastik logo 4 line", label: "Plastik Logo 4 Line", unit: "Pcs" },
-  { key: "plastik roll logo", label: "Plastik Roll Logo", unit: "Pcs" },
-  { key: "plastik roll polos", label: "Plastik Roll Polos", unit: "Pcs" },
-  { key: "Stock Box Tasik", label: "Stock Box Tasik", unit: "Pcs" },
-  { key: "Stock Tray Tasik", label: "Stock Tray Tasik", unit: "Pcs" },
-];
-
-export const GOOGLE_SCRIPT_URL =
-  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
-  "https://script.google.com/macros/s/AKfycbxRlcAK8NPNNLlMz-qt-kw_Cu4yzJNo2hQjAF_2WZg20nM5H2Nybz3nmoS0wOYIPAaakQ/exec";
-
-export async function fetchGoogleSheetData(sheet: string = "susu") {
-  const sheetName = SHEET_MAP[sheet] || sheet;
-  const url = `${GOOGLE_SCRIPT_URL}?sheet=${encodeURIComponent(sheetName)}`;
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (!data || typeof data !== "object") {
-      console.warn("[RSI] Invalid response from GAS:", data);
-      return [];
-    }
-    return Array.isArray(data) ? data : [data];
-  } catch (error) {
-    console.error("[RSI] Fetch error:", error);
-    return [];
-  }
-}
-
-export async function fetchAllSheetsSummary() {
-  const url = `${GOOGLE_SCRIPT_URL}?action=summary`;
-
-  try {
-    const res = await fetch(url);
-    return await res.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
+export {
+  fetchAllSheetsSummary,
+  fetchGoogleSheetData,
+  getLatestStockFromRows,
+  GOOGLE_SCRIPT_URL,
+  SHEET_MAP,
+  SHEETS,
+} from "@/lib/googleSheets";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -93,34 +42,18 @@ export function getSummaryStock(summary: SummaryRow[], key: string): number {
   return item.currentStock ?? item.balance ?? item.stock ?? item.net ?? 0;
 }
 
-type SheetStockRow = { row?: number | string; Net?: number | string };
-
-/** Current stock = Net on the highest row number (matches inventory table). */
-export function getLatestStockFromRows(
-  rows: SheetStockRow[] | null | undefined,
-): number {
-  if (!rows?.length) return 0;
-
-  let latest = rows[0];
-  let maxRow = Number(latest.row ?? 0);
-
-  for (let i = 1; i < rows.length; i++) {
-    const rowNum = Number(rows[i].row ?? 0);
-    if (rowNum >= maxRow) {
-      maxRow = rowNum;
-      latest = rows[i];
-    }
-  }
-
-  return Number(latest.Net ?? 0);
-}
-
-const INVENTORY_SHEET_KEYS = SHEETS.filter((s) => s.key !== "summary").map(
-  (s) => s.key,
-);
-
 function getLatestStocksCacheKey() {
   return "latest-sheet-stocks";
+}
+
+async function fetchStocksFromApi(): Promise<Record<string, number>> {
+  const res = await fetch("/api/sheets/stocks", { cache: "no-store" });
+  if (!res.ok) throw new Error(`Stocks API HTTP ${res.status}`);
+  const body = (await res.json()) as {
+    stocks?: Record<string, number>;
+    failedSheets?: string[];
+  };
+  return body.stocks ?? {};
 }
 
 /** Accurate stocks from each sheet's last row (same source as inventory pages). */
@@ -130,26 +63,14 @@ export function useLatestSheetStocksMap() {
     error,
     isLoading,
     mutate: mutateStocks,
-  } = useSWR(
-    getLatestStocksCacheKey(),
-    async () => {
-      const entries = await Promise.all(
-        INVENTORY_SHEET_KEYS.map(async (key) => {
-          const rows = await fetchGoogleSheetData(key);
-          const stock = getLatestStockFromRows(rows);
-          return [key, stock] as const;
-        }),
-      );
-      return Object.fromEntries(entries) as Record<string, number>;
-    },
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      revalidateIfStale: true,
-      dedupingInterval: 5000,
-      errorRetryCount: 3,
-    },
-  );
+  } = useSWR(getLatestStocksCacheKey(), fetchStocksFromApi, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    revalidateIfStale: true,
+    dedupingInterval: 5000,
+    errorRetryCount: 3,
+    loadingTimeout: 30_000,
+  });
 
   return {
     stockMap: data ?? {},
@@ -161,7 +82,7 @@ export function useLatestSheetStocksMap() {
 
 export function useSheetData(sheet: string) {
   const sheetName = SHEET_MAP[sheet] || sheet;
-  const url = `${GOOGLE_SCRIPT_URL}?sheet=${encodeURIComponent(sheetName)}`;
+  const url = `/api/sheet?sheet=${encodeURIComponent(sheetName)}`;
   const cacheKey = getSheetCacheKey(sheet);
 
   const {
