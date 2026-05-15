@@ -4,6 +4,7 @@ import {
   LayersIcon,
   LayoutGridIcon,
   PackageIcon,
+  ShoppingCartIcon,
 } from "../assets/icons/RSIIcons";
 import type { MenuConfigEntry } from "../components/layout/sideMenu/types";
 
@@ -88,5 +89,13 @@ export const menuConfig: MenuConfigEntry[] = [
         sections: [{ id: "stockTrayTasik", titleKey: "stockTrayTasik" }],
       },
     ],
+  },
+  { type: "category", titleKey: "management" },
+  {
+    type: "item",
+    titleKey: "purchaseOrder",
+    Icon: ShoppingCartIcon,
+    path: "/purchase-order",
+    sections: [{ id: "purchaseOrder", titleKey: "purchaseOrder" }],
   },
 ];

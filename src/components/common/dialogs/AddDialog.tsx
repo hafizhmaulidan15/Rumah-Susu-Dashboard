@@ -12,7 +12,7 @@ import {
 } from "@/components/common/shadcn/dialog";
 import { Input } from "@/components/common/shadcn/input";
 import { Label } from "@/components/common/shadcn/label";
-import { GOOGLE_SCRIPT_URL } from "@/lib/data";
+import { invalidateRelatedCaches } from "@/lib/data";
 
 interface AddDialogProps {
   open: boolean;
@@ -104,12 +104,16 @@ export const AddDialog = ({
         "No. SJ": formData["No. SJ"] || "-",
       };
 
-      await fetch(GOOGLE_SCRIPT_URL, {
+      const response = await fetch("/api/gsheet", {
         method: "POST",
-        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      const result = await response.json();
+      if (!response.ok || result?.success === false || result?.error) {
+        throw new Error(result?.error || "Gagal menyimpan data");
+      }
 
       setFormData({
         Tgl: new Date().toISOString().slice(0, 16),
@@ -120,9 +124,11 @@ export const AddDialog = ({
         "Request By": "",
         "No. SJ": "",
       });
+      invalidateRelatedCaches(sheetKey);
       onSuccess();
     } catch (err) {
       console.error("Add failed:", err);
+      alert("Gagal menambahkan data. Silakan coba lagi.");
     } finally {
       setIsSubmitting(false);
     }

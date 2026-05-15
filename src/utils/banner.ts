@@ -131,6 +131,7 @@ const printStartupBanner = async () => {
     separator,
   ].join("\n");
 
+  // eslint-disable-next-line no-console
   console.log(banner);
 };
 

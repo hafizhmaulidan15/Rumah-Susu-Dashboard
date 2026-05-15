@@ -10,9 +10,17 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Edit, Plus, Search, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import {
+  Edit,
+  History,
+  MapPin,
+  Plus,
+  Search,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 
 import { ArrowDownIcon } from "@/assets/icons/ArrowDownIcon";
 import { ArrowUpIcon } from "@/assets/icons/ArrowUpIcon";
@@ -64,13 +72,49 @@ const SortingArrow = ({ isSorted }: { isSorted: false | "asc" | "desc" }) => {
   );
 };
 
+interface POHistoryItem {
+  id: string;
+  date: string;
+  region: string;
+  items: {
+    key: string;
+    label: string;
+    needed: number;
+    unit: string;
+  }[];
+  totalNeeded: number;
+}
+
 export const RSIInventoryView = ({
   sheetKey,
   sheetLabel,
   sheetUnit,
 }: RSIInventoryViewProps) => {
+  const format = useFormatter();
   const { data, isLoading, mutate } = useSheetData(sheetKey);
+  const [poHistory, setPoHistory] = useState<POHistoryItem[]>([]);
+
+  // Load PO history
+  useEffect(() => {
+    const saved = localStorage.getItem("rsi_po_history");
+    if (saved) {
+      try {
+        const allPO: POHistoryItem[] = JSON.parse(saved);
+        // Filter POs that contain this specific sheetKey OR matching label
+        const relevant = allPO.filter((po) =>
+          po.items.some(
+            (item) => item.key === sheetKey || item.label === sheetLabel,
+          ),
+        );
+        setPoHistory(relevant);
+      } catch (e) {
+        console.error("Failed to load PO history", e);
+      }
+    }
+  }, [sheetKey, sheetLabel]);
+
   const [editRow, setEditRow] = useState<InventoryRow | null>(null);
+
   const [deleteRow, setDeleteRow] = useState<InventoryRow | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([
@@ -103,7 +147,7 @@ export const RSIInventoryView = ({
           const date = new Date(val);
           return (
             <span className="text-primaryText">
-              {date.toLocaleDateString("id-ID", {
+              {format.dateTime(date, {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
@@ -124,7 +168,7 @@ export const RSIInventoryView = ({
           return <span className="text-secondaryText">-</span>;
         return (
           <span className="font-medium text-green-500">
-            {Number(val).toLocaleString()}
+            {format.number(Number(val))}
           </span>
         );
       },
@@ -138,7 +182,7 @@ export const RSIInventoryView = ({
           return <span className="text-secondaryText">-</span>;
         return (
           <span className="font-medium text-red-500">
-            {Number(val).toLocaleString()}
+            {format.number(Number(val))}
           </span>
         );
       },
@@ -152,7 +196,7 @@ export const RSIInventoryView = ({
           return <span className="text-secondaryText">-</span>;
         return (
           <span className="font-bold text-primaryText">
-            {Number(val).toLocaleString()}
+            {format.number(Number(val))}
           </span>
         );
       },
@@ -258,12 +302,65 @@ export const RSIInventoryView = ({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* PO HISTORY AT THE TOP FOR BETTER VISIBILITY */}
+      {(sheetKey === "cup 130 ml" || sheetKey === "cup 175 ml") &&
+        poHistory.length > 0 && (
+          <div className="flex flex-col gap-4 mb-2">
+            <div className="flex items-center gap-2 px-1">
+              <History className="w-5 h-5 text-mainColor" />
+              <h3 className="font-bold text-primaryText">
+                Riwayat Perencanaan PO ({sheetLabel})
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {poHistory.map((po: POHistoryItem) => {
+                const itemInPO = po.items.find(
+                  (i) => i.key === sheetKey || i.label === sheetLabel,
+                );
+                return (
+                  <Card
+                    key={po.id}
+                    className="border-mainColor/20 bg-mainColor/5 shadow-sm"
+                  >
+                    <CardContent className="pt-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3 h-3 text-mainColor" />
+                          <span className="text-xs font-bold text-primaryText uppercase">
+                            {po.region}
+                          </span>
+                        </div>
+                        <span className="text-[9px] text-secondaryText font-medium">
+                          {po.date}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-[10px] text-secondaryText uppercase font-bold tracking-wider">
+                            Jumlah Pesanan
+                          </p>
+                          <p className="text-xl font-black text-mainColor">
+                            +{format.number(itemInPO?.needed || 0)}{" "}
+                            <span className="text-xs font-normal text-secondaryText">
+                              {sheetUnit}
+                            </span>
+                          </p>
+                        </div>
+                        <ShoppingCart className="w-8 h-8 text-mainColor/20" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-primaryText">
-            {sheetLabel}
-          </h2>
-          <p className="text-sm text-secondaryText mt-1">Unit: {sheetUnit}</p>
+          <p className="text-xs text-secondaryText font-medium">
+            Unit: {sheetUnit}
+          </p>
         </div>
         <Button
           onClick={() => setAddOpen(true)}

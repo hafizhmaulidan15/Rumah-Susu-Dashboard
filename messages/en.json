@@ -221,7 +221,9 @@
     "errorPages": "Error Pages",
     "error401": "401 Unauthorized",
     "error404": "404 Not Found",
-    "error500": "500 Server Error"
+    "error500": "500 Server Error",
+    "management": "Management",
+    "purchaseOrder": "Purchase Order"
   },
   "navbar": {
     "auth": "Auth",
@@ -326,7 +328,8 @@
         "plastikRollPolos": "Plastik Roll Polos",
         "plastikRollLogo": "Plastik Roll Logo",
         "stockBoxTasik": "Stock Box Tasik",
-        "stockTrayTasik": "Stock Tray Tasik"
+        "stockTrayTasik": "Stock Tray Tasik",
+        "purchaseOrder": "Purchase Order"
       },
       "pages": {
         "dashboard": "Dashboard",
@@ -351,7 +354,8 @@
         "plastikRollPolos": "Plastik Roll Polos",
         "plastikRollLogo": "Plastik Roll Logo",
         "stockBoxTasik": "Stock Box Tasik",
-        "stockTrayTasik": "Stock Tray Tasik"
+        "stockTrayTasik": "Stock Tray Tasik",
+        "purchaseOrder": "Purchase Order"
       }
     }
   },
@@ -443,7 +447,8 @@
     "plastik roll logo": "Plastik Roll Logo",
     "plastik roll polos": "Plastik Roll Polos",
     "stock box tasik": "Stock Box Tasik",
-    "stock tray tasik": "Stock Tray Tasik"
+    "stock tray tasik": "Stock Tray Tasik",
+    "purchase order": "Purchase Order"
   },
   "profile": {
     "memberSince": "Member since",

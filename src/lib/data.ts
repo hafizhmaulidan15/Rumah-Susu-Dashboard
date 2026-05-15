@@ -28,6 +28,7 @@ export const SHEETS = [
 ];
 
 export const GOOGLE_SCRIPT_URL =
+  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
   "https://script.google.com/macros/s/AKfycbxRlcAK8NPNNLlMz-qt-kw_Cu4yzJNo2hQjAF_2WZg20nM5H2Nybz3nmoS0wOYIPAaakQ/exec";
 
 export async function fetchGoogleSheetData(sheet: string = "susu") {
@@ -77,9 +78,90 @@ function getSummaryCacheKey() {
   return "sheet-summary";
 }
 
+export type SummaryRow = {
+  name?: string;
+  currentStock?: number;
+  balance?: number;
+  stock?: number;
+  net?: number;
+};
+
+/** Stock from GAS summary action — may be stale; prefer getLatestStockFromRows. */
+export function getSummaryStock(summary: SummaryRow[], key: string): number {
+  const item = summary.find((s) => s.name?.toLowerCase() === key.toLowerCase());
+  if (!item) return 0;
+  return item.currentStock ?? item.balance ?? item.stock ?? item.net ?? 0;
+}
+
+type SheetStockRow = { row?: number | string; Net?: number | string };
+
+/** Current stock = Net on the highest row number (matches inventory table). */
+export function getLatestStockFromRows(
+  rows: SheetStockRow[] | null | undefined,
+): number {
+  if (!rows?.length) return 0;
+
+  let latest = rows[0];
+  let maxRow = Number(latest.row ?? 0);
+
+  for (let i = 1; i < rows.length; i++) {
+    const rowNum = Number(rows[i].row ?? 0);
+    if (rowNum >= maxRow) {
+      maxRow = rowNum;
+      latest = rows[i];
+    }
+  }
+
+  return Number(latest.Net ?? 0);
+}
+
+const INVENTORY_SHEET_KEYS = SHEETS.filter((s) => s.key !== "summary").map(
+  (s) => s.key,
+);
+
+function getLatestStocksCacheKey() {
+  return "latest-sheet-stocks";
+}
+
+/** Accurate stocks from each sheet's last row (same source as inventory pages). */
+export function useLatestSheetStocksMap() {
+  const {
+    data,
+    error,
+    isLoading,
+    mutate: mutateStocks,
+  } = useSWR(
+    getLatestStocksCacheKey(),
+    async () => {
+      const entries = await Promise.all(
+        INVENTORY_SHEET_KEYS.map(async (key) => {
+          const rows = await fetchGoogleSheetData(key);
+          const stock = getLatestStockFromRows(rows);
+          return [key, stock] as const;
+        }),
+      );
+      return Object.fromEntries(entries) as Record<string, number>;
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      revalidateIfStale: true,
+      dedupingInterval: 5000,
+      errorRetryCount: 3,
+    },
+  );
+
+  return {
+    stockMap: data ?? {},
+    isLoading,
+    isError: !!error,
+    mutate: mutateStocks,
+  };
+}
+
 export function useSheetData(sheet: string) {
   const sheetName = SHEET_MAP[sheet] || sheet;
-  const url = `${GOOGLE_SCRIPT_URL}?sheet=${sheetName}`;
+  const url = `${GOOGLE_SCRIPT_URL}?sheet=${encodeURIComponent(sheetName)}`;
   const cacheKey = getSheetCacheKey(sheet);
 
   const {
@@ -88,10 +170,10 @@ export function useSheetData(sheet: string) {
     isLoading,
     mutate: mutateData,
   } = useSWR(cacheKey, () => fetcher(url), {
-    revalidateOnFocus: false,
+    revalidateOnFocus: true,
     revalidateOnReconnect: true,
     revalidateIfStale: true,
-    dedupingInterval: 5000,
+    dedupingInterval: 2000,
     errorRetryCount: 3,
     loadingTimeout: 3000,
   });
@@ -114,10 +196,10 @@ export function useSummaryData() {
     isLoading,
     mutate: mutateData,
   } = useSWR(cacheKey, () => fetcher(url), {
-    revalidateOnFocus: false,
+    revalidateOnFocus: true,
     revalidateOnReconnect: true,
     revalidateIfStale: true,
-    dedupingInterval: 5000,
+    dedupingInterval: 2000,
     errorRetryCount: 3,
     loadingTimeout: 3000,
   });
@@ -145,6 +227,7 @@ export function invalidateAllCaches() {
 export function invalidateRelatedCaches(sheet: string) {
   invalidateSheetCache(sheet);
   invalidateSummaryCache();
+  globalMutate(getLatestStocksCacheKey(), undefined, { revalidate: true });
 }
 
 export function preloadData() {
@@ -156,12 +239,10 @@ export function preloadData() {
   ];
 
   prioritySheets.forEach((sheet) => {
-    const sheetName = SHEET_MAP[sheet] || sheet;
-    const url = `${GOOGLE_SCRIPT_URL}?sheet=${sheetName}`;
-    globalMutate(url, undefined, { revalidate: true });
+    globalMutate(getSheetCacheKey(sheet), undefined, { revalidate: true });
   });
 
-  globalMutate(`${GOOGLE_SCRIPT_URL}?action=summary`, undefined, {
+  globalMutate(getSummaryCacheKey(), undefined, {
     revalidate: true,
   });
 }

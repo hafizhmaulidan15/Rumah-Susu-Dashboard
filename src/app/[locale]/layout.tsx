@@ -1,4 +1,3 @@
-import "dotenv/config";
 import "@/styles/globals.css";
 
 import { Metadata, Viewport } from "next";
