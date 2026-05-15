@@ -177,10 +177,12 @@ export const RSIDashboardView = () => {
     );
   }, [filteredItems]);
 
-  const lowStockItems = useMemo(
-    () => allStockItems.filter((item) => item.isLow && item.key !== "susu cup"),
-    [allStockItems],
-  );
+  const lowStockItems = useMemo(() => {
+    if (showStocksPending) return [];
+    return allStockItems.filter(
+      (item) => item.isLow && item.key !== "susu cup",
+    );
+  }, [allStockItems, showStocksPending]);
 
   const totalStockValue = useMemo(() => {
     return Object.values(stockMap).reduce((sum, val) => {
@@ -277,12 +279,16 @@ export const RSIDashboardView = () => {
             <h3
               className={`text-4xl font-black tabular-nums ${lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
             >
-              {lowStockItems.length}
+              {showStocksPending ? "---" : lowStockItems.length}
             </h3>
             <div
               className={`mt-4 inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[10px] font-bold ${lowStockItems.length > 0 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}
             >
-              {lowStockItems.length > 0 ? "Action Required" : "Status Healthy"}
+              {showStocksPending
+                ? "Loading..."
+                : lowStockItems.length > 0
+                  ? "Action Required"
+                  : "Status Healthy"}
             </div>
           </CardContent>
           <AlertTriangle
@@ -400,7 +406,11 @@ export const RSIDashboardView = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {lowStockItems.length > 0 ? (
+              {showStocksPending ? (
+                <p className="p-8 text-center text-sm font-semibold opacity-60">
+                  Memuat data stok...
+                </p>
+              ) : lowStockItems.length > 0 ? (
                 <div className="divide-y divide-white/5 dark:divide-zinc-50 max-h-[380px] overflow-y-auto">
                   {lowStockItems.map((item) => (
                     <div
