@@ -8,6 +8,13 @@ const config = {
     "./public/**/*.html",
     "./src/**/*.{js,jsx,ts,tsx,vue}",
   ],
+  theme: {
+    extend: {
+      colors: {
+        mainColor: "var(--color-mainColor)",
+      },
+    },
+  },
   plugins: [],
 };
 
