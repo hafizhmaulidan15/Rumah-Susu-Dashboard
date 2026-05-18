@@ -1,19 +1,43 @@
-/**
- * Teardown-only service worker: removes legacy caches and unregisters itself.
- * The app no longer uses SW for caching; this file exists so old installs can upgrade.
- */
-self.addEventListener("install", () => {
-  self.skipWaiting();
-});
+const CACHE = "rsi-static-v2";
+const CACHEABLE = [
+  "/_next/static/",
+  "/icon-",
+  "/og-image.png",
+  "/manifest.json",
+];
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
+self.addEventListener("install", () => self.skipWaiting());
+
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
     (async () => {
-      const names = await caches.keys();
-      await Promise.all(names.map((name) => caches.delete(name)));
-      await self.registration.unregister();
-      const clients = await self.clients.matchAll({ type: "window" });
-      await Promise.all(clients.map((client) => client.navigate(client.url)));
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => k !== CACHE && caches.delete(k)));
+      await self.clients.claim();
     })(),
   );
 });
+
+self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
+
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (url.pathname.startsWith("/api/") || e.request.mode === "navigate") return;
+
+  if (CACHEABLE.some((p) => url.pathname.startsWith(p))) {
+    e.respondWith(
+      caches.match(e.request).then((r) => r || fetchAndCache(e.request)),
+    );
+  }
+});
+
+async function fetchAndCache(request) {
+  const res = await fetch(request);
+  if (res.ok) {
+    const clone = res.clone();
+    caches.open(CACHE).then((cache) => cache.put(request, clone));
+  }
+  return res;
+}
