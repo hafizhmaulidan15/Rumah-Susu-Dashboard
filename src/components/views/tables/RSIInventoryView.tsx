@@ -72,6 +72,7 @@ const SortingArrow = ({ isSorted }: { isSorted: false | "asc" | "desc" }) => {
   );
 };
 
+// Extend PO type with status
 interface POHistoryItem {
   id: string;
   date: string;
@@ -81,8 +82,10 @@ interface POHistoryItem {
     label: string;
     needed: number;
     unit: string;
+    settled?: boolean;
   }[];
   totalNeeded: number;
+  status?: "active" | "settled";
 }
 
 export const RSIInventoryView = ({
@@ -91,27 +94,58 @@ export const RSIInventoryView = ({
   sheetUnit,
 }: RSIInventoryViewProps) => {
   const format = useFormatter();
+  const displayUnit = sheetKey.startsWith("cup") ? "cp" : sheetUnit;
   const { data, isLoading, mutate } = useSheetData(sheetKey);
   const [poHistory, setPoHistory] = useState<POHistoryItem[]>([]);
 
-  // Load PO history
+  // Load PO history — only active POs with unsettled items for this sheet
   useEffect(() => {
-    const saved = localStorage.getItem("rsi_po_history");
-    if (saved) {
-      try {
-        const allPO: POHistoryItem[] = JSON.parse(saved);
-        // Filter POs that contain this specific sheetKey OR matching label
-        const relevant = allPO.filter((po) =>
-          po.items.some(
-            (item) => item.key === sheetKey || item.label === sheetLabel,
-          ),
-        );
-        setPoHistory(relevant);
-      } catch (e) {
-        console.error("Failed to load PO history", e);
+    const loadPO = () => {
+      const saved = localStorage.getItem("rsi_po_history");
+      if (saved) {
+        try {
+          const allPO: POHistoryItem[] = JSON.parse(saved);
+          const relevant = allPO.filter(
+            (po) =>
+              po.status !== "settled" &&
+              po.items.some(
+                (item) => item.key === sheetKey || item.label === sheetLabel,
+              ),
+          );
+          setPoHistory(relevant);
+        } catch (e) {
+          console.error("Failed to load PO history", e);
+        }
       }
-    }
+    };
+    loadPO();
+    // Sync across tabs/windows
+    window.addEventListener("storage", loadPO);
+    return () => window.removeEventListener("storage", loadPO);
   }, [sheetKey, sheetLabel]);
+
+  // Settle a PO (mark as settled and remove from active list)
+  const settlePO = (id: string) => {
+    const saved = localStorage.getItem("rsi_po_history");
+    if (!saved) return;
+    try {
+      const allPO: POHistoryItem[] = JSON.parse(saved);
+      const updated = allPO.map((po) =>
+        po.id === id ? { ...po, status: "settled" } : po,
+      );
+      localStorage.setItem("rsi_po_history", JSON.stringify(updated));
+      // Trigger storage event manually for same tab
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "rsi_po_history",
+          newValue: JSON.stringify(updated),
+        }),
+      );
+      setPoHistory((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      console.error("Failed to settle PO", e);
+    }
+  };
 
   const [editRow, setEditRow] = useState<InventoryRow | null>(null);
 
@@ -277,6 +311,21 @@ export const RSIInventoryView = ({
     [data],
   );
 
+  // Latest stock = Net of last row in rawData (sorted by row asc)
+  const currentStock = useMemo(() => {
+    if (rawData.length === 0) return 0;
+    const sorted = [...rawData].sort((a, b) => a.row - b.row);
+    return sorted[sorted.length - 1].Net ?? 0;
+  }, [rawData]);
+
+  // For EditDialog: find the Net of the row immediately before the edited row
+  const getPrevStock = (editedRow: InventoryRow): number => {
+    const sorted = [...rawData].sort((a, b) => a.row - b.row);
+    const idx = sorted.findIndex((r) => r.row === editedRow.row);
+    if (idx <= 0) return 0;
+    return sorted[idx - 1].Net ?? 0;
+  };
+
   const filteredData = useMemo(
     () =>
       searchQuery
@@ -330,9 +379,18 @@ export const RSIInventoryView = ({
                             {po.region}
                           </span>
                         </div>
-                        <span className="text-[9px] text-secondaryText font-medium">
-                          {po.date}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] text-secondaryText font-medium">
+                            {po.date}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => settlePO(po.id)}
+                          >
+                            Lunasi
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex justify-between items-end">
                         <div>
@@ -342,7 +400,7 @@ export const RSIInventoryView = ({
                           <p className="text-xl font-black text-mainColor">
                             +{format.number(itemInPO?.needed || 0)}{" "}
                             <span className="text-xs font-normal text-secondaryText">
-                              {sheetUnit}
+                              {displayUnit}
                             </span>
                           </p>
                         </div>
@@ -359,7 +417,7 @@ export const RSIInventoryView = ({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs text-secondaryText font-medium">
-            Unit: {sheetUnit}
+            Unit: {displayUnit}
           </p>
         </div>
         <Button
@@ -547,6 +605,7 @@ export const RSIInventoryView = ({
           onOpenChange={(open) => !open && setEditRow(null)}
           row={editRow}
           sheetKey={sheetKey}
+          prevStock={getPrevStock(editRow)}
           onSuccess={() => {
             setEditRow(null);
             mutate();
@@ -574,6 +633,7 @@ export const RSIInventoryView = ({
           sheetKey={sheetKey}
           sheetLabel={sheetLabel}
           sheetUnit={sheetUnit}
+          currentStock={currentStock}
           onSuccess={() => {
             setAddOpen(false);
             mutate();

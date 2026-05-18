@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  CheckCheck,
   CheckCircle2,
+  ClipboardList,
   History,
   MapPin,
   ShoppingCart,
@@ -15,16 +17,49 @@ import { Card, CardContent } from "@/components/common/shadcn/card";
 import { Input } from "@/components/common/shadcn/input";
 import { SHEETS, useLatestSheetStocksMap } from "@/lib/data";
 
+interface POItem {
+  key: string;
+  label: string;
+  needed: number;
+  actual: number;
+  spare: number;
+  unit: string;
+  settled: boolean;
+}
+
 interface POHistoryItem {
   id: string;
   date: string;
   region: string;
-  items: {
-    label: string;
-    needed: number;
-    unit: string;
-  }[];
+  status: "active" | "settled";
+  settledAt?: string;
+  items: POItem[];
   totalNeeded: number;
+}
+
+const STORAGE_KEY = "rsi_po_history_v2";
+
+function saveHistory(history: POHistoryItem[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  // Backward compat for RSIInventoryView (only active, non-settled items)
+  localStorage.setItem(
+    "rsi_po_history",
+    JSON.stringify(
+      history
+        .filter((po) => po.status === "active")
+        .map((po) => ({
+          ...po,
+          items: po.items
+            .filter((i) => !i.settled)
+            .map((i) => ({
+              key: i.key,
+              label: i.label,
+              needed: i.needed,
+              unit: i.unit,
+            })),
+        })),
+    ),
+  );
 }
 
 export const PurchaseOrderView = () => {
@@ -32,63 +67,82 @@ export const PurchaseOrderView = () => {
   const { stockMap, isLoading } = useLatestSheetStocksMap();
   const [region, setRegion] = useState("");
   const [history, setHistory] = useState<POHistoryItem[]>([]);
-  // Use 'quantities' instead of 'targets' to store manual order amounts
-  const [quantities, setQuantities] = useState<Record<string, number>>({
-    "cup 130 ml": 0,
-    "cup 175 ml": 0,
+  const [showSettled, setShowSettled] = useState(false);
+  const [poFromManagement, setPoFromManagement] = useState<
+    Record<string, string>
+  >({
+    "cup 130 ml": "",
+    "cup 175 ml": "",
   });
 
-  // Load history from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("rsi_po_history");
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         setHistory(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load PO history", e);
+      } catch {
+        /* ignore */
       }
     }
   }, []);
 
-  const cupSheets = useMemo(() => {
-    return SHEETS.filter(
-      (s) => s.key === "cup 130 ml" || s.key === "cup 175 ml",
-    );
-  }, []);
+  const cupSheets = useMemo(
+    () =>
+      SHEETS.filter((s) => s.key === "cup 130 ml" || s.key === "cup 175 ml"),
+    [],
+  );
+
+  // Spare dari PO aktif terakhir per item
+  const lastSpareMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    cupSheets.forEach((s) => {
+      for (const po of history) {
+        if (po.status !== "active") continue;
+        const item = po.items.find((i) => i.key === s.key && !i.settled);
+        if (item) {
+          map[s.key] = item.spare ?? 0;
+          break;
+        }
+      }
+    });
+    return map;
+  }, [history, cupSheets]);
 
   const poItems = useMemo(() => {
     return cupSheets.map((sheet) => {
       const currentStock = stockMap[sheet.key] ?? 0;
-      const orderQty = quantities[sheet.key] ?? 0;
-
-      return {
-        ...sheet,
-        currentStock,
-        orderQty,
-        status: orderQty > 0 ? "To Order" : "No Order",
-      };
+      const mgmtPO = Number(poFromManagement[sheet.key]) || 0;
+      const lastSpare = lastSpareMap[sheet.key] ?? 0;
+      const netNeeded = Math.max(0, mgmtPO - lastSpare);
+      const newSpare = mgmtPO > 0 ? Math.max(0, mgmtPO - netNeeded) : 0;
+      return { ...sheet, currentStock, mgmtPO, lastSpare, netNeeded, newSpare };
     });
-  }, [stockMap, cupSheets, quantities]);
+  }, [stockMap, cupSheets, poFromManagement, lastSpareMap]);
 
-  const handleQtyChange = (key: string, value: string) => {
-    const cleanValue = value.replace(/[^0-9]/g, "");
-    const num = parseInt(cleanValue) || 0;
-    setQuantities((prev) => ({ ...prev, [key]: num }));
-  };
+  const activePOs = useMemo(
+    () => history.filter((p) => p.status === "active"),
+    [history],
+  );
+  const settledPOs = useMemo(
+    () => history.filter((p) => p.status === "settled"),
+    [history],
+  );
 
-  const totalToOrder = poItems.reduce((acc, item) => acc + item.orderQty, 0);
+  const handlePoChange = (key: string, value: string) =>
+    setPoFromManagement((prev) => ({
+      ...prev,
+      [key]: value.replace(/[^0-9]/g, ""),
+    }));
 
-  const handleGeneratePO = () => {
+  const handleSavePO = () => {
     if (!region.trim()) {
       alert("⚠️ Nama Daerah harus diisi!");
       return;
     }
-
-    if (totalToOrder <= 0) {
-      alert("⚠️ Masukkan jumlah cup yang ingin dipesan terlebih dahulu.");
+    if (poItems.every((i) => i.mgmtPO === 0)) {
+      alert("⚠️ Masukkan jumlah PO dari management.");
       return;
     }
-
     const newPO: POHistoryItem = {
       id: Math.random().toString(36).substr(2, 9),
       date: new Date().toLocaleString("id-ID", {
@@ -99,49 +153,72 @@ export const PurchaseOrderView = () => {
         minute: "2-digit",
       }),
       region: region.trim(),
+      status: "active",
       items: poItems
-        .filter((i) => i.orderQty > 0)
+        .filter((i) => i.mgmtPO > 0)
         .map((i) => ({
-          key: i.key, // Save the sheet key
+          key: i.key,
           label: i.label,
-          needed: i.orderQty,
+          needed: i.netNeeded,
+          actual: i.mgmtPO,
+          spare: i.newSpare,
           unit: i.unit,
+          settled: false,
         })),
-      totalNeeded: totalToOrder,
+      totalNeeded: poItems.reduce((a, i) => a + i.netNeeded, 0),
     };
-
-    const updatedHistory = [newPO, ...history];
-    setHistory(updatedHistory);
-    localStorage.setItem("rsi_po_history", JSON.stringify(updatedHistory));
-
-    alert(`✅ PO untuk daerah "${region}" berhasil disimpan!`);
-
-    // Clear inputs
+    const updated = [newPO, ...history];
+    setHistory(updated);
+    saveHistory(updated);
+    alert(`✅ PO untuk "${region}" berhasil disimpan!`);
     setRegion("");
-    setQuantities({
-      "cup 130 ml": 0,
-      "cup 175 ml": 0,
-    });
+    setPoFromManagement({ "cup 130 ml": "", "cup 175 ml": "" });
   };
 
-  const deleteHistory = (id: string) => {
+  // Lunasi satu item dalam PO
+  const handleSettleItem = (poId: string, itemKey: string) => {
+    const updated = history.map((po) => {
+      if (po.id !== poId) return po;
+      const newItems = po.items.map((i) =>
+        i.key === itemKey ? { ...i, settled: true } : i,
+      );
+      const allSettled = newItems.every((i) => i.settled);
+      return {
+        ...po,
+        items: newItems,
+        status: allSettled ? ("settled" as const) : ("active" as const),
+        settledAt: allSettled ? new Date().toLocaleString("id-ID") : undefined,
+      };
+    });
+    setHistory(updated);
+    saveHistory(updated);
+  };
+
+  // Lunasi semua item dalam PO
+  const handleSettleAll = (poId: string) => {
+    if (!confirm("Tandai semua item PO ini sebagai LUNAS?")) return;
+    const updated = history.map((po) => {
+      if (po.id !== poId) return po;
+      return {
+        ...po,
+        items: po.items.map((i) => ({ ...i, settled: true })),
+        status: "settled" as const,
+        settledAt: new Date().toLocaleString("id-ID"),
+      };
+    });
+    setHistory(updated);
+    saveHistory(updated);
+  };
+
+  const handleDelete = (id: string) => {
     const updated = history.filter((h) => h.id !== id);
     setHistory(updated);
-    localStorage.setItem("rsi_po_history", JSON.stringify(updated));
+    saveHistory(updated);
   };
 
   return (
     <div className="flex flex-col gap-6">
-      <style jsx global>{`
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-        input[type="number"] {
-          -moz-appearance: textfield;
-        }
-      `}</style>
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-primaryText flex items-center gap-2">
@@ -149,31 +226,23 @@ export const PurchaseOrderView = () => {
             Purchase Planning
           </h2>
           <p className="text-secondaryText text-sm mt-1">
-            Input langsung jumlah cup yang ingin dipesan per daerah.
+            Input PO dari management. Spare order sebelumnya diperhitungkan
+            otomatis.
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondaryText" />
             <Input
-              placeholder="Ketik Nama Daerah..."
+              placeholder="Nama Daerah..."
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              className={`pl-10 w-[200px] lg:w-[300px] h-11 border-2 bg-primaryBg transition-all ${
-                !region && totalToOrder > 0
-                  ? "border-amber-500/50 animate-pulse"
-                  : "border-mainBorder"
-              }`}
+              className="pl-10 w-[200px] lg:w-[240px] h-11 border-2 bg-primaryBg border-mainBorder"
             />
           </div>
           <Button
-            className={`gap-2 font-bold h-11 px-6 shadow-lg transition-all ${
-              totalToOrder > 0 && region
-                ? "bg-mainColor hover:bg-mainColor/90 text-black scale-105"
-                : "bg-mainBorder text-secondaryText opacity-70 grayscale cursor-not-allowed"
-            }`}
-            onClick={handleGeneratePO}
+            onClick={handleSavePO}
+            className="gap-2 font-bold h-11 px-6 bg-mainColor hover:bg-mainColor/90 text-black"
           >
             <CheckCircle2 className="w-4 h-4" />
             Simpan PO
@@ -181,40 +250,45 @@ export const PurchaseOrderView = () => {
         </div>
       </div>
 
+      {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {poItems.map((item) => (
           <Card
             key={item.key}
-            className={`${item.orderQty > 0 ? "border-mainColor/30 bg-mainColor/5" : "border-mainBorder bg-primaryBg/50"} shadow-sm overflow-hidden`}
+            className="border-mainBorder shadow-sm overflow-hidden"
           >
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`p-3 rounded-xl ${item.orderQty > 0 ? "bg-mainColor/10" : "bg-primaryBg"}`}
-                  >
-                    <ShoppingCart
-                      className={`w-6 h-6 ${item.orderQty > 0 ? "text-mainColor" : "text-secondaryText"}`}
-                    />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-primaryText">
-                      {item.label}
-                    </p>
-                    <p className="text-2xl font-black mt-0.5">
-                      {item.orderQty > 0
-                        ? `+${format.number(item.orderQty)}`
-                        : "0"}
-                      <span className="text-xs font-normal text-secondaryText ml-1">
-                        To Order
-                      </span>
-                    </p>
-                  </div>
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-bold text-primaryText">{item.label}</p>
+                <p className="text-xs text-secondaryText">
+                  Stock: {format.number(item.currentStock)} Pcs
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-primaryBg/60 rounded-lg px-2 py-2">
+                  <p className="text-[10px] text-secondaryText uppercase font-bold">
+                    PO Mgmt
+                  </p>
+                  <p className="text-base font-black text-primaryText">
+                    {item.mgmtPO > 0 ? format.number(item.mgmtPO) : "-"}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-secondaryText">Stock saat ini:</p>
-                  <p className="font-bold text-primaryText">
-                    {format.number(item.currentStock)} Pcs
+                <div className="bg-amber-500/10 rounded-lg px-2 py-2">
+                  <p className="text-[10px] text-amber-500 uppercase font-bold">
+                    Spare Lalu
+                  </p>
+                  <p className="text-base font-black text-amber-500">
+                    {item.lastSpare > 0
+                      ? `-${format.number(item.lastSpare)}`
+                      : "0"}
+                  </p>
+                </div>
+                <div className="bg-mainColor/10 rounded-lg px-2 py-2">
+                  <p className="text-[10px] text-mainColor uppercase font-bold">
+                    Net Order
+                  </p>
+                  <p className="text-base font-black text-mainColor">
+                    {format.number(item.netNeeded)}
                   </p>
                 </div>
               </div>
@@ -223,150 +297,240 @@ export const PurchaseOrderView = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 flex flex-col gap-6">
-          <Card className="shadow-sm border-mainBorder overflow-hidden">
-            <div className="px-6 py-4 border-b border-mainBorder bg-primaryBg/50">
-              <h3 className="font-bold text-primaryText">Input Pesanan</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-tableHeaderBg text-secondaryText uppercase text-[10px] font-bold tracking-widest border-b border-mainBorder">
-                  <tr>
-                    <th className="px-6 py-4">Item Name</th>
-                    <th className="px-6 py-4">Current Stock</th>
-                    <th className="px-6 py-4 bg-mainColor/5">
-                      Jumlah Pesanan (Pcs)
-                    </th>
-                    <th className="px-6 py-4 text-mainColor text-right">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-mainBorder">
-                  {isLoading ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-10 text-center text-secondaryText italic"
-                      >
-                        Loading...
-                      </td>
-                    </tr>
-                  ) : (
-                    poItems.map((item) => (
-                      <tr
-                        key={item.key}
-                        className="hover:bg-primaryBg/50 transition-colors"
-                      >
-                        <td className="px-6 py-4 font-bold text-primaryText">
-                          {item.label}
-                        </td>
-                        <td className="px-6 py-4 text-secondaryText">
-                          {format.number(item.currentStock)} Pcs
-                        </td>
-                        <td className="px-6 py-4 bg-mainColor/5">
-                          <Input
-                            type="text"
-                            inputMode="numeric"
-                            value={item.orderQty === 0 ? "" : item.orderQty}
-                            placeholder="Masukkan jumlah..."
-                            onChange={(e) =>
-                              handleQtyChange(item.key, e.target.value)
-                            }
-                            className="h-10 text-base font-bold bg-white dark:bg-primaryBg border-mainColor/30 focus:border-mainColor w-full shadow-inner"
-                          />
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <span
-                            className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                              item.orderQty > 0
-                                ? "bg-mainColor/10 text-mainColor"
-                                : "bg-primaryBg text-secondaryText opacity-50"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+      {/* Input Table */}
+      <Card className="shadow-sm border-mainBorder overflow-hidden">
+        <div className="px-6 py-4 border-b border-mainBorder bg-primaryBg/50 flex items-center gap-2">
+          <ClipboardList className="w-4 h-4 text-mainColor" />
+          <h3 className="font-bold text-primaryText">
+            Input PO dari Management
+          </h3>
         </div>
-
-        <div className="flex flex-col gap-6">
-          <Card className="shadow-sm border-mainBorder h-full flex flex-col">
-            <div className="px-6 py-4 border-b border-mainBorder bg-primaryBg/50 flex items-center justify-between">
-              <h3 className="font-bold text-primaryText flex items-center gap-2">
-                <History className="w-4 h-4 text-mainColor" />
-                Daftar Riwayat PO
-              </h3>
-              <span className="text-[10px] font-bold bg-mainColor/10 text-mainColor px-2 py-0.5 rounded-full uppercase">
-                {history.length} Record
-              </span>
-            </div>
-            <CardContent className="p-0 flex-grow overflow-y-auto max-h-[600px]">
-              {history.length === 0 ? (
-                <div className="p-10 text-center flex flex-col items-center gap-3">
-                  <ShoppingCart className="w-12 h-12 text-mainBorder" />
-                  <p className="text-secondaryText text-sm italic">
-                    Belum ada PO.
-                  </p>
-                </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-tableHeaderBg text-secondaryText uppercase text-[10px] font-bold tracking-widest border-b border-mainBorder">
+              <tr>
+                <th className="px-6 py-3">Item</th>
+                <th className="px-6 py-3">Stock Saat Ini</th>
+                <th className="px-6 py-3">Spare Lalu</th>
+                <th className="px-6 py-3 bg-mainColor/5">PO dari Management</th>
+                <th className="px-6 py-3 text-right">Net Order</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-mainBorder">
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-8 text-center text-secondaryText italic"
+                  >
+                    Loading...
+                  </td>
+                </tr>
               ) : (
-                <div className="divide-y divide-mainBorder">
-                  {history.map((po) => (
-                    <div
-                      key={po.id}
-                      className="p-5 hover:bg-primaryBg/30 transition-colors group relative"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-mainColor" />
-                          <p className="font-black text-primaryText uppercase text-sm tracking-tight">
-                            {po.region}
+                poItems.map((item) => (
+                  <tr
+                    key={item.key}
+                    className="hover:bg-primaryBg/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 font-bold text-primaryText">
+                      {item.label}
+                    </td>
+                    <td className="px-6 py-4 text-secondaryText">
+                      {format.number(item.currentStock)} Pcs
+                    </td>
+                    <td className="px-6 py-4">
+                      {item.lastSpare > 0 ? (
+                        <span className="text-amber-500 font-bold">
+                          {format.number(item.lastSpare)} Pcs
+                        </span>
+                      ) : (
+                        <span className="text-secondaryText">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 bg-mainColor/5">
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        value={poFromManagement[item.key] ?? ""}
+                        placeholder="Contoh: 22200"
+                        onChange={(e) =>
+                          handlePoChange(item.key, e.target.value)
+                        }
+                        className="h-10 text-base font-bold bg-white dark:bg-primaryBg border-mainColor/30 focus:border-mainColor w-full"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <p className="text-base font-black text-mainColor">
+                        {format.number(item.netNeeded)} Pcs
+                      </p>
+                      {item.mgmtPO > 0 && item.newSpare > 0 && (
+                        <p className="text-[10px] text-amber-500">
+                          Spare baru: +{format.number(item.newSpare)}
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Active POs */}
+      {activePOs.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 px-1">
+            <History className="w-5 h-5 text-mainColor" />
+            <h3 className="font-bold text-primaryText">
+              PO Aktif ({activePOs.length})
+            </h3>
+          </div>
+          <div className="flex flex-col gap-3">
+            {activePOs.map((po) => (
+              <Card key={po.id} className="border-mainColor/20 shadow-sm">
+                <CardContent className="pt-4 pb-4">
+                  {/* PO Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-mainColor" />
+                      <p className="font-black text-primaryText uppercase text-sm">
+                        {po.region}
+                      </p>
+                      <span className="text-[10px] text-secondaryText">
+                        {po.date}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSettleAll(po.id)}
+                        className="h-8 px-3 text-xs bg-green-600 hover:bg-green-700 text-white gap-1"
+                      >
+                        <CheckCheck className="w-3 h-3" />
+                        Lunasi Semua
+                      </Button>
+                      <button
+                        onClick={() => handleDelete(po.id)}
+                        className="p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-all text-secondaryText"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Items */}
+                  <div className="flex flex-col gap-2">
+                    {po.items.map((item) => (
+                      <div
+                        key={item.key}
+                        className={`flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all ${
+                          item.settled
+                            ? "border-green-500/30 bg-green-500/5 opacity-60"
+                            : "border-mainBorder bg-primaryBg/40"
+                        }`}
+                      >
+                        <div>
+                          <p className="text-sm font-bold text-primaryText flex items-center gap-2">
+                            {item.settled && (
+                              <CheckCheck className="w-3.5 h-3.5 text-green-500" />
+                            )}
+                            {item.label}
+                          </p>
+                          <p className="text-xs text-secondaryText">
+                            Net: {format.number(item.needed)} Pcs
+                            {item.spare > 0 &&
+                              ` · Spare: +${format.number(item.spare)}`}
                           </p>
                         </div>
-                        <button
-                          onClick={() => deleteHistory(po.id)}
-                          className="p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-all text-secondaryText"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="space-y-2 mb-3">
-                        {po.items.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between items-center text-xs bg-primaryBg/40 px-3 py-2 rounded-lg"
+                        {item.settled ? (
+                          <span className="text-xs font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full">
+                            ✓ Lunas
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSettleItem(po.id, item.key)}
+                            className="h-8 px-3 text-xs border-green-500/50 text-green-600 hover:bg-green-500/10 gap-1"
                           >
-                            <span className="text-secondaryText font-medium">
-                              {item.label}
-                            </span>
-                            <span className="font-black text-mainColor">
-                              +{format.number(item.needed)}
-                            </span>
-                          </div>
-                        ))}
+                            <CheckCircle2 className="w-3 h-3" />
+                            Lunasi
+                          </Button>
+                        )}
                       </div>
-                      <div className="flex justify-between items-end border-t border-dashed border-mainBorder pt-3">
-                        <p className="text-[9px] text-secondaryText font-bold uppercase">
-                          {po.date}
-                        </p>
-                        <p className="text-sm font-black text-primaryText">
-                          {format.number(po.totalNeeded)} Pcs
-                        </p>
-                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Settled POs */}
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={() => setShowSettled((v) => !v)}
+          className="flex items-center gap-2 px-1 text-secondaryText hover:text-primaryText transition-colors"
+        >
+          <CheckCheck className="w-4 h-4 text-green-500" />
+          <span className="font-bold text-sm">
+            Riwayat PO Selesai ({settledPOs.length})
+          </span>
+          <span className="text-xs">
+            {showSettled ? "▲ Sembunyikan" : "▼ Tampilkan"}
+          </span>
+        </button>
+
+        {showSettled && settledPOs.length === 0 && (
+          <p className="text-sm text-secondaryText italic px-2">
+            Belum ada PO yang selesai.
+          </p>
+        )}
+
+        {showSettled &&
+          settledPOs.map((po) => (
+            <Card
+              key={po.id}
+              className="border-green-500/20 bg-green-500/3 shadow-sm opacity-80"
+            >
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCheck className="w-4 h-4 text-green-500" />
+                    <p className="font-black text-primaryText uppercase text-sm">
+                      {po.region}
+                    </p>
+                    <span className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">
+                      SELESAI
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-secondaryText">
+                      {po.settledAt}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(po.id)}
+                      className="p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-all text-secondaryText"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {po.items.map((item) => (
+                    <div
+                      key={item.key}
+                      className="text-xs bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full font-medium"
+                    >
+                      {item.label}: {format.number(item.needed)} Pcs ✓
                     </div>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          ))}
       </div>
     </div>
   );

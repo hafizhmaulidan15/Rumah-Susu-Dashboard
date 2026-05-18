@@ -1,0 +1,2 @@
+{"sessionId":"4b9b99","runId":"prod-fix","hypothesisId":"G","location":"api/sheets/stocks/route.ts:GET","message":"Server stocks aggregation","data":{"failedSheets":[],"susu":0,"cup130":185063,"keysLoaded":10},"timestamp":1778869886920}
+{"sessionId":"4b9b99","runId":"prod-fix","hypothesisId":"G","location":"api/sheets/stocks/route.ts:GET","message":"Server stocks aggregation","data":{"failedSheets":[],"susu":0,"cup130":185063,"keysLoaded":10},"timestamp":1778869897347}
