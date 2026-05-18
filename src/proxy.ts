@@ -27,29 +27,43 @@ const isAuthConfigured = (): boolean => {
   return Boolean(graphqlUrl && authUrl);
 };
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+  Pragma: "no-cache",
+};
+
+function withNoStore(response: NextResponse) {
+  for (const [key, value] of Object.entries(NO_STORE_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 const proxy = (request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
 
   /** Public paths - always accessible. */
   if (isPublicPath(pathname)) {
-    return handleI18nRouting(request);
+    return withNoStore(handleI18nRouting(request));
   }
 
   /** No auth configured - standalone demo mode, skip protection. */
   if (!isAuthConfigured()) {
-    return handleI18nRouting(request);
+    return withNoStore(handleI18nRouting(request));
   }
 
   /** Auth configured - check session. */
   const sessionCookie = getSessionCookie(request);
   if (sessionCookie) {
-    return handleI18nRouting(request);
+    return withNoStore(handleI18nRouting(request));
   }
 
   /** No session - redirect to login. */
   const locale = pathname.match(/^\/([a-z]{2})\//)?.at(1) || "";
-  return NextResponse.redirect(
-    new URL(`/${locale ? locale + "/" : ""}login`, request.url),
+  return withNoStore(
+    NextResponse.redirect(
+      new URL(`/${locale ? locale + "/" : ""}login`, request.url),
+    ),
   );
 };
 

@@ -25,8 +25,22 @@ const connectSrcDomains = [
   ),
 ].join(" ");
 
+const buildId =
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.VERCEL_DEPLOYMENT_ID ||
+  "local-dev";
+
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_BUILD_ID: buildId,
+  },
+  experimental: {
+    staleTimes: {
+      dynamic: 0,
+      static: 0,
+    },
+  },
   turbopack: {
     root: __dirname,
   },
@@ -64,6 +78,14 @@ const nextConfig = {
       },
       {
         source: "/sw.js",
+        headers: noStoreHtml,
+      },
+      {
+        source: "/",
+        headers: noStoreHtml,
+      },
+      {
+        source: "/:locale(en|pl)",
         headers: noStoreHtml,
       },
       {

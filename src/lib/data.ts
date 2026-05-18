@@ -12,7 +12,11 @@ export {
 } from "@/lib/googleSheets";
 
 const fetcher = async (url: string) => {
-  const res = await fetch(url, { cache: "no-store" });
+  const buildId = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
+  const sep = url.includes("?") ? "&" : "?";
+  const res = await fetch(`${url}${sep}_build=${buildId}`, {
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   if (!data) return [];
