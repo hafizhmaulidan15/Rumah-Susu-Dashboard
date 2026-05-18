@@ -78,6 +78,16 @@ export const AddDialog = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      let apiKey = localStorage.getItem("rsi_admin_key");
+      if (!apiKey) {
+        apiKey = window.prompt("Masukkan PIN Admin untuk melakukan perubahan:");
+        if (apiKey) localStorage.setItem("rsi_admin_key", apiKey);
+        else {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const inVal = tipe === "masuk" ? jumlah : 0;
       const outVal = tipe === "keluar" ? jumlah : 0;
 
@@ -87,7 +97,7 @@ export const AddDialog = ({
         date: new Date(formData.Tgl).toISOString(),
         in: inVal,
         out: outVal,
-        net: projectedStock,
+        net: projectedStock, // Hanya untuk backward compatibility jika Apps Script belum diupdate
         keterangan: formData.Keterangan || "-",
         requestBy: formData["Request By"] || "-",
         no_sj: formData["No. SJ"] || "-",
@@ -95,12 +105,19 @@ export const AddDialog = ({
 
       const response = await fetch("/api/gsheet", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
         body: JSON.stringify(payload),
       });
 
       const result = await response.json();
       if (!response.ok || result?.success === false || result?.error) {
+        if (response.status === 401) {
+          localStorage.removeItem("rsi_admin_key");
+          throw new Error("PIN Admin salah!");
+        }
         throw new Error(result?.error || "Gagal menyimpan data");
       }
 

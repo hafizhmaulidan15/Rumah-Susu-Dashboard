@@ -49,10 +49,39 @@ const nextConfig = {
     ],
   },
   async headers() {
+    const noStoreHtml = [
+      {
+        key: "Cache-Control",
+        value: "no-store, no-cache, must-revalidate, max-age=0",
+      },
+      { key: "Pragma", value: "no-cache" },
+    ];
+
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/sw.js",
+        headers: noStoreHtml,
+      },
+      {
+        source: "/:locale(en|pl)/:path*",
+        headers: noStoreHtml,
+      },
+      {
+        source: "/api/:path*",
+        headers: noStoreHtml,
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
       },
     ];
   },

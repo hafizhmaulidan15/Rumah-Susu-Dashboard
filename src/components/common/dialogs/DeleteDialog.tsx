@@ -32,9 +32,22 @@ export const DeleteDialog = ({
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
+      let apiKey = localStorage.getItem("rsi_admin_key");
+      if (!apiKey) {
+        apiKey = window.prompt("Masukkan PIN Admin untuk melakukan perubahan:");
+        if (apiKey) localStorage.setItem("rsi_admin_key", apiKey);
+        else {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const response = await fetch("/api/gsheet", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
         body: JSON.stringify({
           action: "delete",
           sheet: sheetKey,
@@ -44,6 +57,10 @@ export const DeleteDialog = ({
 
       const result = await response.json();
       if (!response.ok || result?.success === false || result?.error) {
+        if (response.status === 401) {
+          localStorage.removeItem("rsi_admin_key");
+          throw new Error("PIN Admin salah!");
+        }
         throw new Error(result?.error || "Gagal menghapus data");
       }
 

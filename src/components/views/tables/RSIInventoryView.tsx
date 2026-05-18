@@ -12,12 +12,12 @@ import {
 } from "@tanstack/react-table";
 import {
   Edit,
-  History,
   MapPin,
   Plus,
   Search,
   ShoppingCart,
   Trash2,
+  X,
 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -38,6 +38,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/common/shadcn/pagination";
+import {
+  type CupPOKey,
+  isCupPOKey,
+  useActivePO,
+} from "@/context/ActivePOContext";
 import { useSheetData } from "@/lib/data";
 import { getLatestStockFromRows } from "@/lib/googleSheets";
 
@@ -73,22 +78,6 @@ const SortingArrow = ({ isSorted }: { isSorted: false | "asc" | "desc" }) => {
   );
 };
 
-// Extend PO type with status
-interface POHistoryItem {
-  id: string;
-  date: string;
-  region: string;
-  items: {
-    key: string;
-    label: string;
-    needed: number;
-    unit: string;
-    settled?: boolean;
-  }[];
-  totalNeeded: number;
-  status?: "active" | "settled";
-}
-
 export const RSIInventoryView = ({
   sheetKey,
   sheetLabel,
@@ -97,60 +86,8 @@ export const RSIInventoryView = ({
   const format = useFormatter();
   const displayUnit = sheetKey.startsWith("cup") ? "cp" : sheetUnit;
   const { data, isLoading, mutate } = useSheetData(sheetKey);
-  const [poHistory, setPoHistory] = useState<POHistoryItem[]>([]);
-
-  useEffect(() => {
-    mutate();
-  }, [mutate, sheetKey]);
-
-  // Load PO history — only active POs with unsettled items for this sheet
-  useEffect(() => {
-    const loadPO = () => {
-      const saved = localStorage.getItem("rsi_po_history");
-      if (saved) {
-        try {
-          const allPO: POHistoryItem[] = JSON.parse(saved);
-          const relevant = allPO.filter(
-            (po) =>
-              po.status !== "settled" &&
-              po.items.some(
-                (item) => item.key === sheetKey || item.label === sheetLabel,
-              ),
-          );
-          setPoHistory(relevant);
-        } catch (e) {
-          console.error("Failed to load PO history", e);
-        }
-      }
-    };
-    loadPO();
-    // Sync across tabs/windows
-    window.addEventListener("storage", loadPO);
-    return () => window.removeEventListener("storage", loadPO);
-  }, [sheetKey, sheetLabel]);
-
-  // Settle a PO (mark as settled and remove from active list)
-  const settlePO = (id: string) => {
-    const saved = localStorage.getItem("rsi_po_history");
-    if (!saved) return;
-    try {
-      const allPO: POHistoryItem[] = JSON.parse(saved);
-      const updated = allPO.map((po) =>
-        po.id === id ? { ...po, status: "settled" } : po,
-      );
-      localStorage.setItem("rsi_po_history", JSON.stringify(updated));
-      // Trigger storage event manually for same tab
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: "rsi_po_history",
-          newValue: JSON.stringify(updated),
-        }),
-      );
-      setPoHistory((prev) => prev.filter((p) => p.id !== id));
-    } catch (e) {
-      console.error("Failed to settle PO", e);
-    }
-  };
+  const { activePO, clearCupPO } = useActivePO();
+  const cupPO = isCupPOKey(sheetKey) ? activePO[sheetKey] : undefined;
 
   const [editRow, setEditRow] = useState<InventoryRow | null>(null);
 
@@ -354,68 +291,43 @@ export const RSIInventoryView = ({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* PO HISTORY AT THE TOP FOR BETTER VISIBILITY */}
-      {(sheetKey === "cup 130 ml" || sheetKey === "cup 175 ml") &&
-        poHistory.length > 0 && (
-          <div className="flex flex-col gap-4 mb-2">
-            <div className="flex items-center gap-2 px-1">
-              <History className="w-5 h-5 text-mainColor" />
-              <h3 className="font-bold text-primaryText">
-                Riwayat Perencanaan PO ({sheetLabel})
-              </h3>
+      {cupPO && cupPO.quantity > 0 && (
+        <Card className="border-mainColor/30 bg-mainColor/5 shadow-sm">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <ShoppingCart className="w-8 h-8 text-mainColor shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] text-secondaryText uppercase font-bold tracking-wider">
+                    PO dari Management
+                  </p>
+                  <p className="text-2xl font-black text-mainColor">
+                    {format.number(cupPO.quantity)}{" "}
+                    <span className="text-sm font-normal text-secondaryText">
+                      {displayUnit}
+                    </span>
+                  </p>
+                  {cupPO.region && (
+                    <p className="text-xs text-secondaryText flex items-center gap-1 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      {cupPO.region}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-secondaryText hover:text-primaryText shrink-0"
+                onClick={() => clearCupPO(sheetKey as CupPOKey)}
+                aria-label="Sembunyikan PO"
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {poHistory.map((po: POHistoryItem) => {
-                const itemInPO = po.items.find(
-                  (i) => i.key === sheetKey || i.label === sheetLabel,
-                );
-                return (
-                  <Card
-                    key={po.id}
-                    className="border-mainColor/20 bg-mainColor/5 shadow-sm"
-                  >
-                    <CardContent className="pt-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3 h-3 text-mainColor" />
-                          <span className="text-xs font-bold text-primaryText uppercase">
-                            {po.region}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] text-secondaryText font-medium">
-                            {po.date}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => settlePO(po.id)}
-                          >
-                            Lunasi
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-end">
-                        <div>
-                          <p className="text-[10px] text-secondaryText uppercase font-bold tracking-wider">
-                            Jumlah Pesanan
-                          </p>
-                          <p className="text-xl font-black text-mainColor">
-                            +{format.number(itemInPO?.needed || 0)}{" "}
-                            <span className="text-xs font-normal text-secondaryText">
-                              {displayUnit}
-                            </span>
-                          </p>
-                        </div>
-                        <ShoppingCart className="w-8 h-8 text-mainColor/20" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex items-center justify-between gap-3">
         <div>

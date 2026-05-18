@@ -32,6 +32,7 @@ import {
   CardTitle,
 } from "@/components/common/shadcn/card";
 import { Progress } from "@/components/common/shadcn/progress";
+import { CUP_PO_KEYS, useActivePO } from "@/context/ActivePOContext";
 import { Link } from "@/i18n/navigation";
 import {
   invalidateAllCaches,
@@ -127,20 +128,14 @@ export const RSIDashboardView = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  const [poCount, setPoCount] = useState(0);
+  const { activePO } = useActivePO();
+  const poCount = CUP_PO_KEYS.filter(
+    (key) => (activePO[key]?.quantity ?? 0) > 0,
+  ).length;
 
   useEffect(() => {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    const savedPO = localStorage.getItem("rsi_po_history");
-    if (savedPO) {
-      try {
-        const pos = JSON.parse(savedPO);
-        setPoCount(pos.length);
-      } catch (e) {
-        console.error(e);
-      }
-    }
     return () => clearInterval(timer);
   }, []);
 
@@ -299,13 +294,13 @@ export const RSIDashboardView = () => {
         <Card className="bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-sm">
           <CardContent className="p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
-              Stored PO Drafts
+              PO Aktif (Tampilan Cup)
             </p>
             <h3 className="text-4xl font-black text-zinc-900 dark:text-white tabular-nums">
               {poCount}
             </h3>
             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-zinc-400">
-              <ClipboardList className="w-3 h-3" /> Local Browser History
+              <ClipboardList className="w-3 h-3" /> Sesi tab (refresh OK)
             </div>
           </CardContent>
         </Card>

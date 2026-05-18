@@ -3,6 +3,7 @@
 import { useTheme } from "next-themes";
 import { ReactNode, useEffect, useRef, useState } from "react";
 
+import { ActivePOProvider } from "@/context/ActivePOContext";
 import { useFontManager } from "@/hooks/useFontManager";
 import { useGlobalHotkeys } from "@/hooks/useGlobalHotkeys";
 import { usePathname } from "@/i18n/navigation";
@@ -109,7 +110,7 @@ export const Layout = ({ children }: LayoutProps) => {
           className={`flex flex-col w-full ${CONTENT_MAX_WIDTH} mx-auto relative`}
         >
           <div className="w-full flex justify-center max-w-full px-0 md:px-0 xl:pl-3 xl:pr-2 2xl:px-4">
-            {children}
+            <ActivePOProvider>{children}</ActivePOProvider>
           </div>
         </div>
         <div

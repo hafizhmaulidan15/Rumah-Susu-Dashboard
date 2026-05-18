@@ -2,12 +2,22 @@ import { NextResponse } from "next/server";
 
 import { GOOGLE_SCRIPT_URL } from "@/lib/googleSheets";
 
+export const dynamic = "force-dynamic";
+
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
 };
 
 export async function POST(request: Request) {
   try {
+    const apiKey = request.headers.get("x-api-key");
+    if (process.env.API_SECRET_KEY && apiKey !== process.env.API_SECRET_KEY) {
+      return NextResponse.json(
+        { error: "Unauthorized. PIN Admin salah atau tidak ada." },
+        { status: 401, headers: NO_STORE_HEADERS },
+      );
+    }
+
     const body = await request.json();
 
     const response = await fetch(GOOGLE_SCRIPT_URL, {
