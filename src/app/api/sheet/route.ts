@@ -4,6 +4,10 @@ import { fetchGoogleSheetData, SHEET_MAP } from "@/lib/googleSheets";
 
 export const dynamic = "force-dynamic";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
+
 const SHEET_FETCH_TIMEOUT_MS = 20_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -31,12 +35,12 @@ export async function GET(request: Request) {
       fetchGoogleSheetData(sheetName),
       SHEET_FETCH_TIMEOUT_MS,
     );
-    return NextResponse.json(rows);
+    return NextResponse.json(rows, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[api/sheet] fetch failed:", sheetName, error);
     return NextResponse.json(
       { error: "Failed to load sheet data" },
-      { status: 502 },
+      { status: 502, headers: NO_STORE_HEADERS },
     );
   }
 }

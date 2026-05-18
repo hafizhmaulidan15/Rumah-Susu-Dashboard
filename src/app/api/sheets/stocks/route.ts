@@ -8,6 +8,10 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
+
 const SHEET_FETCH_TIMEOUT_MS = 20_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -46,9 +50,12 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({
-    stocks,
-    failedSheets,
-    ok: failedSheets.length === 0,
-  });
+  return NextResponse.json(
+    {
+      stocks,
+      failedSheets,
+      ok: failedSheets.length === 0,
+    },
+    { headers: NO_STORE_HEADERS },
+  );
 }

@@ -12,7 +12,7 @@ export {
 } from "@/lib/googleSheets";
 
 const fetcher = async (url: string) => {
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   if (!data) return [];
@@ -66,8 +66,9 @@ export function useLatestSheetStocksMap() {
   } = useSWR(getLatestStocksCacheKey(), fetchStocksFromApi, {
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
+    revalidateOnMount: true,
     revalidateIfStale: true,
-    dedupingInterval: 5000,
+    dedupingInterval: 0,
     errorRetryCount: 3,
     loadingTimeout: 30_000,
   });
@@ -93,8 +94,9 @@ export function useSheetData(sheet: string) {
   } = useSWR(cacheKey, () => fetcher(url), {
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
+    revalidateOnMount: true,
     revalidateIfStale: true,
-    dedupingInterval: 2000,
+    dedupingInterval: 0,
     errorRetryCount: 3,
     loadingTimeout: 3000,
   });

@@ -39,6 +39,7 @@ import {
   PaginationPrevious,
 } from "@/components/common/shadcn/pagination";
 import { useSheetData } from "@/lib/data";
+import { getLatestStockFromRows } from "@/lib/googleSheets";
 
 export interface InventoryRow {
   row: number;
@@ -97,6 +98,10 @@ export const RSIInventoryView = ({
   const displayUnit = sheetKey.startsWith("cup") ? "cp" : sheetUnit;
   const { data, isLoading, mutate } = useSheetData(sheetKey);
   const [poHistory, setPoHistory] = useState<POHistoryItem[]>([]);
+
+  useEffect(() => {
+    mutate();
+  }, [mutate, sheetKey]);
 
   // Load PO history — only active POs with unsettled items for this sheet
   useEffect(() => {
@@ -311,12 +316,10 @@ export const RSIInventoryView = ({
     [data],
   );
 
-  // Latest stock = Net of last row in rawData (sorted by row asc)
-  const currentStock = useMemo(() => {
-    if (rawData.length === 0) return 0;
-    const sorted = [...rawData].sort((a, b) => a.row - b.row);
-    return sorted[sorted.length - 1].Net ?? 0;
-  }, [rawData]);
+  const currentStock = useMemo(
+    () => getLatestStockFromRows(rawData),
+    [rawData],
+  );
 
   // For EditDialog: find the Net of the row immediately before the edited row
   const getPrevStock = (editedRow: InventoryRow): number => {

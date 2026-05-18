@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
-const GOOGLE_SCRIPT_URL =
-  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
-  "https://script.google.com/macros/s/AKfycbzR4LzWzTgBvEcjfg9z4K31baf2-CNB5InQNPOLn3ko-AVwYT1Cgc969KVzEnmt5_pjsA/exec";
+import { GOOGLE_SCRIPT_URL } from "@/lib/googleSheets";
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
 
 export async function POST(request: Request) {
   try {
@@ -27,12 +29,12 @@ export async function POST(request: Request) {
     // Google Apps Script usually returns 200 even for some errors,
     // but here we just pass through the response.
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("GSheet Proxy Error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 },
+      { status: 500, headers: NO_STORE_HEADERS },
     );
   }
 }

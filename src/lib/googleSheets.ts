@@ -64,25 +64,30 @@ export async function fetchAllSheetsSummary() {
   }
 }
 
-type SheetStockRow = { row?: number | string; Net?: number | string };
+type SheetStockRow = {
+  row?: number | string;
+  Tgl?: string;
+  Net?: number | string;
+};
 
-/** Current stock = Net on the highest row number (matches inventory table). */
+function rowSortKey(r: SheetStockRow): number {
+  const tgl = r.Tgl ? Date.parse(r.Tgl) : NaN;
+  if (Number.isFinite(tgl)) return tgl;
+  return Number(r.row ?? 0);
+}
+
+/** Current stock = Net on the latest transaction row (by date, then row number). */
 export function getLatestStockFromRows(
   rows: SheetStockRow[] | null | undefined,
 ): number {
   if (!rows?.length) return 0;
 
-  let latest = rows[0];
-  let maxRow = Number(latest.row ?? 0);
+  const latest = [...rows].sort((a, b) => {
+    const diff = rowSortKey(a) - rowSortKey(b);
+    if (diff !== 0) return diff;
+    return Number(a.row ?? 0) - Number(b.row ?? 0);
+  })[rows.length - 1];
 
-  for (let i = 1; i < rows.length; i++) {
-    const rowNum = Number(rows[i].row ?? 0);
-    if (rowNum >= maxRow) {
-      maxRow = rowNum;
-      latest = rows[i];
-    }
-  }
-
-  const net = Number(latest.Net ?? 0);
+  const net = Number(latest?.Net ?? 0);
   return Number.isFinite(net) ? net : 0;
 }

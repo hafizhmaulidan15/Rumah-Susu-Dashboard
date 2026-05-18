@@ -29,7 +29,7 @@ const TIPE_OPTIONS = [
 ];
 
 function parseDateLocal(val: unknown): string {
-  if (!val) return new Date().toISOString().slice(0, 16);
+  if (!val) return "";
   if (val instanceof Date) return val.toISOString().slice(0, 16);
   if (typeof val === "string") {
     try {

@@ -40,17 +40,26 @@ export const AddDialog = ({
 }: AddDialogProps) => {
   const displayUnit = sheetKey.startsWith("cup") ? "cp" : sheetUnit;
   const [tipe, setTipe] = useState<"masuk" | "keluar">("masuk");
-  const [formData, setFormData] = useState<Record<string, string>>(() => {
-    const now = new Date();
-    return {
-      Tgl: now.toISOString().slice(0, 16),
+  const [formData, setFormData] = useState<Record<string, string>>({
+    Tgl: "",
+    Jumlah: "",
+    Keterangan: "",
+    "Request By": "",
+    "No. SJ": "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setTipe("masuk");
+    setFormData({
+      Tgl: new Date().toISOString().slice(0, 16),
       Jumlah: "",
       Keterangan: "",
       "Request By": "",
       "No. SJ": "",
-    };
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    });
+  }, [open]);
 
   // Auto-calculate projected stock
   const jumlah = Number(formData.Jumlah) || 0;
