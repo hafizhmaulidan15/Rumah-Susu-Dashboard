@@ -6,31 +6,13 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/i18n.ts");
 
 const isDev = process.env.NODE_ENV === "development";
 
-const originOf = (envVar) => {
-  const val = process.env[envVar];
-  return val ? new URL(val).origin : null;
-};
-
-const connectSrcDomains = [
-  ...new Set(
-    [
-      "'self'",
-      "https://raw.githubusercontent.com",
-      "https://script.google.com",
-      "https://script.googleusercontent.com",
-      "https://p.typekit.net",
-      originOf("NEXT_PUBLIC_AUTH_URL"),
-      isDev && "http://localhost:4000",
-    ].filter(Boolean),
-  ),
-].join(" ");
-
 const buildId =
   process.env.VERCEL_GIT_COMMIT_SHA ||
   process.env.VERCEL_DEPLOYMENT_ID ||
   "local-dev";
 
 const nextConfig = {
+  poweredByHeader: false,
   reactStrictMode: true,
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,
@@ -38,7 +20,7 @@ const nextConfig = {
   experimental: {
     staleTimes: {
       dynamic: 0,
-      static: 0,
+      static: 30,
     },
   },
   turbopack: {
@@ -110,13 +92,6 @@ const nextConfig = {
 };
 
 const securityHeaders = [
-  {
-    // Content-Security-Policy defines where resources can be loaded from,
-    // limiting potential vectors for cross-site scripting (XSS) attacks
-    // by explicitly whitelisting trusted sources for various content types
-    key: "Content-Security-Policy",
-    value: `default-src 'self'; worker-src blob: 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com; font-src 'self' data: https://fonts.gstatic.com; connect-src ${connectSrcDomains}; frame-ancestors 'none'; frame-src 'none'`,
-  },
   {
     // X-Frame-Options prevents our application from being embedded within iframes
     // on other domains, protecting users from clickjacking attacks where malicious

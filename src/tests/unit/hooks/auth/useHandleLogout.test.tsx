@@ -1,4 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
+import { toast } from "sonner";
 
 import { useHandleLogout } from "@/hooks/auth/useHandleLogout";
 import { signOut as _signOut } from "@/services/auth/auth-client";
@@ -9,6 +10,10 @@ const signOut = _signOut as NonNullable<typeof _signOut>;
 
 vi.mock("@/utils/presentationMode", () => ({
   isPresentationModeClient: vi.fn(() => false),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: vi.fn() },
 }));
 
 describe("useHandleLogout", () => {
@@ -64,21 +69,19 @@ describe("useHandleLogout", () => {
     expect(useLayoutStore.getState().isLoggingOut).toBe(false);
   });
 
-  it("shows alert in presentation mode", async () => {
+  it("shows toast in presentation mode", async () => {
     const { isPresentationModeClient } =
       await import("@/utils/presentationMode");
     vi.mocked(isPresentationModeClient).mockReturnValue(true);
 
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
     const { result } = renderHook(() => useHandleLogout());
 
     await act(async () => {
       await result.current.handleLogout();
     });
 
-    expect(alertSpy).toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalled();
     expect(signOut).not.toHaveBeenCalled();
-    alertSpy.mockRestore();
     vi.mocked(isPresentationModeClient).mockReturnValue(false);
   });
 });

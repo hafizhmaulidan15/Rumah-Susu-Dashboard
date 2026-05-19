@@ -35,7 +35,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_1",
     name: "Jane Cooper",
-    email: "jane.cooper@nellavio.com",
+    email: "jane.cooper@rsi.demo",
     role: "admin",
     banned: false,
     createdAt: "2024-11-02",
@@ -43,7 +43,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_2",
     name: "John Doe",
-    email: "john.doe@nellavio.com",
+    email: "john.doe@rsi.demo",
     role: "editor",
     banned: false,
     createdAt: "2025-01-15",
@@ -51,7 +51,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_3",
     name: "Alice Smith",
-    email: "alice.smith@nellavio.com",
+    email: "alice.smith@rsi.demo",
     role: "viewer",
     banned: false,
     createdAt: "2025-02-20",
@@ -59,7 +59,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_4",
     name: "Bob Wilson",
-    email: "bob.wilson@nellavio.com",
+    email: "bob.wilson@rsi.demo",
     role: "viewer",
     banned: true,
     createdAt: "2025-03-05",
@@ -67,7 +67,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_5",
     name: "Emma Davis",
-    email: "emma.davis@nellavio.com",
+    email: "emma.davis@rsi.demo",
     role: "editor",
     banned: false,
     createdAt: "2025-03-18",
@@ -75,7 +75,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_6",
     name: "Marcus Chen",
-    email: "marcus.chen@nellavio.com",
+    email: "marcus.chen@rsi.demo",
     role: "viewer",
     banned: false,
     createdAt: "2025-04-01",
@@ -83,7 +83,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_7",
     name: "Olivia Brown",
-    email: "olivia.brown@nellavio.com",
+    email: "olivia.brown@rsi.demo",
     role: "editor",
     banned: false,
     createdAt: "2025-04-10",
@@ -91,7 +91,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_8",
     name: "Liam Johnson",
-    email: "liam.johnson@nellavio.com",
+    email: "liam.johnson@rsi.demo",
     role: "viewer",
     banned: false,
     createdAt: "2025-04-15",
@@ -99,7 +99,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_9",
     name: "Sophia Martinez",
-    email: "sophia.martinez@nellavio.com",
+    email: "sophia.martinez@rsi.demo",
     role: "admin",
     banned: false,
     createdAt: "2025-04-20",
@@ -107,7 +107,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_10",
     name: "Noah Taylor",
-    email: "noah.taylor@nellavio.com",
+    email: "noah.taylor@rsi.demo",
     role: "viewer",
     banned: true,
     createdAt: "2025-05-01",
@@ -115,7 +115,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_11",
     name: "Isabella Garcia",
-    email: "isabella.garcia@nellavio.com",
+    email: "isabella.garcia@rsi.demo",
     role: "editor",
     banned: false,
     createdAt: "2025-05-10",
@@ -123,7 +123,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_12",
     name: "Ethan Lee",
-    email: "ethan.lee@nellavio.com",
+    email: "ethan.lee@rsi.demo",
     role: "viewer",
     banned: false,
     createdAt: "2025-05-18",
@@ -131,7 +131,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_13",
     name: "Mia Anderson",
-    email: "mia.anderson@nellavio.com",
+    email: "mia.anderson@rsi.demo",
     role: "viewer",
     banned: false,
     createdAt: "2025-06-02",
@@ -139,7 +139,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_14",
     name: "James Thomas",
-    email: "james.thomas@nellavio.com",
+    email: "james.thomas@rsi.demo",
     role: "editor",
     banned: false,
     createdAt: "2025-06-14",
@@ -147,7 +147,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_15",
     name: "Charlotte White",
-    email: "charlotte.white@nellavio.com",
+    email: "charlotte.white@rsi.demo",
     role: "viewer",
     banned: true,
     createdAt: "2025-06-25",
@@ -155,7 +155,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_16",
     name: "Benjamin Harris",
-    email: "benjamin.harris@nellavio.com",
+    email: "benjamin.harris@rsi.demo",
     role: "admin",
     banned: false,
     createdAt: "2025-07-05",
@@ -163,7 +163,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_17",
     name: "Amelia Clark",
-    email: "amelia.clark@nellavio.com",
+    email: "amelia.clark@rsi.demo",
     role: "editor",
     banned: false,
     createdAt: "2025-07-20",
@@ -171,7 +171,7 @@ const MOCK_USERS: MockUser[] = [
   {
     id: "usr_18",
     name: "Lucas Robinson",
-    email: "lucas.robinson@nellavio.com",
+    email: "lucas.robinson@rsi.demo",
     role: "viewer",
     banned: false,
     createdAt: "2025-08-03",

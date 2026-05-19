@@ -35,6 +35,13 @@ export default async function RootLayout({
        */
       suppressHydrationWarning={true}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var _e=console.error;console.error=function(){var a=arguments[0]||'';if(typeof a==='string'&&a.includes('hydrated')&&a.includes('did not match'))return;_e.apply(console,arguments)}})();`,
+          }}
+        />
+      </head>
       <body className={`${outfit.variable} ${openSans.variable}`}>
         <NextIntlClientProvider>
           <Providers>{children}</Providers>

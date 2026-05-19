@@ -10,6 +10,7 @@ export const useThemeChange = ({
   const [isMounted, setIsMounted] = useState(false);
   const currentTheme = theme || "light";
   const [sliderDark, setSliderDark] = useState(currentTheme === "dark");
+  const suppressTooltipRef = useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -44,8 +45,6 @@ export const useThemeChange = ({
       }
     };
   }, []);
-
-  const suppressTooltipRef = useRef(false);
 
   const toggleTheme = () => {
     const newTheme = currentTheme === "dark" ? "light" : "dark";

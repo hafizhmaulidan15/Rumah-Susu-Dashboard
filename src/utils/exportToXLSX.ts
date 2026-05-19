@@ -40,5 +40,9 @@ export const exportToXLSX = <T extends object>(
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, filename);
-  XLSX.writeFile(workbook, `${filename}.xlsx`);
+  try {
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
+  } catch (err) {
+    console.error("Failed to write XLSX file:", err);
+  }
 };

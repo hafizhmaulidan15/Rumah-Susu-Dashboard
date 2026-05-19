@@ -48,17 +48,21 @@ export const useNotifications = ({
   useEffect(() => {
     if (initialNotifications.length > 0) {
       setNotifications(initialNotifications);
-      localStorage.removeItem("notificationsState");
+      try {
+        localStorage.removeItem("notificationsState");
+      } catch {}
     }
   }, [initialNotifications]);
 
   /** Persists updated notifications to both React state and localStorage. */
   const handleNotificationsUpdate = (updatedNotifications: Notification[]) => {
     setNotifications(updatedNotifications);
-    localStorage.setItem(
-      "notificationsState",
-      JSON.stringify(updatedNotifications),
-    );
+    try {
+      localStorage.setItem(
+        "notificationsState",
+        JSON.stringify(updatedNotifications),
+      );
+    } catch {}
   };
 
   const newNotificationsCount = notifications.filter((n) => n.isNew).length;

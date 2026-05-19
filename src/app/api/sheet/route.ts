@@ -1,25 +1,36 @@
 import { NextResponse } from "next/server";
 
+import {
+  NO_STORE_HEADERS,
+  SHEET_FETCH_TIMEOUT_MS,
+  withTimeout,
+} from "@/lib/api-utils";
 import { fetchGoogleSheetData, SHEET_MAP } from "@/lib/googleSheets";
 
 export const dynamic = "force-dynamic";
 
-const NO_STORE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate",
-};
-
-const SHEET_FETCH_TIMEOUT_MS = 20_000;
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error("Sheet fetch timeout")), ms);
-    }),
-  ]);
+function isValidOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  if (!origin && !referer) return true;
+  const host = request.headers.get("host") || "localhost:3000";
+  const allowed = [
+    `http://${host}`,
+    `https://${host}`,
+    "http://localhost:3000",
+  ];
+  const check = origin || referer || "";
+  return allowed.some((a) => check.startsWith(a));
 }
 
 export async function GET(request: Request) {
+  if (!isValidOrigin(request)) {
+    return NextResponse.json(
+      { error: "Forbidden" },
+      { status: 403, headers: NO_STORE_HEADERS },
+    );
+  }
+
   const sheet = new URL(request.url).searchParams.get("sheet");
   if (!sheet) {
     return NextResponse.json(
@@ -28,7 +39,13 @@ export async function GET(request: Request) {
     );
   }
 
-  const sheetName = SHEET_MAP[sheet] ?? sheet;
+  if (!(sheet in SHEET_MAP)) {
+    return NextResponse.json(
+      { error: "Invalid sheet" },
+      { status: 400, headers: NO_STORE_HEADERS },
+    );
+  }
+  const sheetName = SHEET_MAP[sheet];
 
   try {
     const rows = await withTimeout(

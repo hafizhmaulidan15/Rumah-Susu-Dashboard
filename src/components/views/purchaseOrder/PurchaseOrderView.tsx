@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useFormatter } from "next-intl";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/common/shadcn/button";
 import { Card, CardContent } from "@/components/common/shadcn/card";
@@ -50,7 +51,10 @@ export const PurchaseOrderView = () => {
   const handleApplyPO = () => {
     const itemsWithQty = poItems.filter((i) => i.mgmtPO > 0);
     if (itemsWithQty.length === 0) {
-      alert("⚠️ Masukkan jumlah PO untuk Cup 130 ml atau Cup 175 ml.");
+      toast.error("Isi jumlah PO dulu", {
+        description:
+          "Masukkan jumlah pesanan untuk Cup 130 ml atau Cup 175 ml.",
+      });
       return;
     }
 
@@ -62,8 +66,16 @@ export const PurchaseOrderView = () => {
       });
     });
 
-    alert(
-      `✅ PO ditampilkan di halaman ${itemsWithQty.map((i) => i.label).join(" & ")}. Tidak disimpan ke riwayat.`,
+    const label = itemsWithQty.map((i) => i.label).join(" & ");
+    toast.success(
+      <span>
+        PO <span className="font-bold">{label}</span> ditambahkan
+      </span>,
+      {
+        description: regionLabel
+          ? `Target: ${regionLabel} — ${itemsWithQty[0].mgmtPO.toLocaleString("id-ID")} pcs`
+          : `${itemsWithQty[0].mgmtPO.toLocaleString("id-ID")} pcs — lihat di halaman ${label}`,
+      },
     );
     setRegion("");
     setPoFromManagement({ "cup 130 ml": "", "cup 175 ml": "" });

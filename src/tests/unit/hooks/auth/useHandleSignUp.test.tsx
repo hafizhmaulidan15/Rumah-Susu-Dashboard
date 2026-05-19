@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
 
 import { useHandleSignUp } from "@/hooks/auth/useHandleSignUp";
 import { signUp as _signUp } from "@/services/auth/auth-client";
@@ -8,6 +9,10 @@ const signUp = _signUp as NonNullable<typeof _signUp>;
 
 vi.mock("@/utils/presentationMode", () => ({
   isPresentationModeClient: vi.fn(() => false),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: vi.fn() },
 }));
 
 describe("useHandleSignUp", () => {
@@ -127,12 +132,11 @@ describe("useHandleSignUp", () => {
     expect(onSuccess).toHaveBeenCalled();
   });
 
-  it("shows alert in presentation mode", async () => {
+  it("shows toast in presentation mode", async () => {
     const { isPresentationModeClient } =
       await import("@/utils/presentationMode");
     vi.mocked(isPresentationModeClient).mockReturnValue(true);
 
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
     const { result } = renderHook(() => useHandleSignUp());
 
     await act(async () => {
@@ -143,9 +147,8 @@ describe("useHandleSignUp", () => {
       });
     });
 
-    expect(alertSpy).toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalled();
     expect(signUp.email).not.toHaveBeenCalled();
-    alertSpy.mockRestore();
     vi.mocked(isPresentationModeClient).mockReturnValue(false);
   });
 
@@ -162,7 +165,9 @@ describe("useHandleSignUp", () => {
   });
 
   it("handles network error gracefully", async () => {
-    vi.mocked(signUp.email).mockRejectedValue(new Error("Network error"));
+    vi.mocked(signUp.email).mockImplementation(async () => {
+      throw new Error("Network error");
+    });
 
     const { result } = renderHook(() => useHandleSignUp());
 

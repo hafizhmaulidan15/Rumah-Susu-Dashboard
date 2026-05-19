@@ -1,6 +1,7 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as Yup from "yup";
 
 import { LoginData } from "@/components/auth/LoginForm";
@@ -46,9 +47,9 @@ export const useHandleLogin = (onLoginSuccess?: () => void) => {
     async (data: LoginData, rememberMe: boolean) => {
       /** Check if running in presentation mode (no backend) */
       if (isPresentationModeClient()) {
-        alert(
-          "Authentication is disabled in the presentation mode. Check README.md to find information on how to connect the backend to make it work.\n\nIf you already configured .env, please remember that npm run build must be run before npm start for changes to take effect. This is not needed when using npm run dev.",
-        );
+        toast.error("Login tidak tersedia", {
+          description: "Mode presentasi aktif. Backend tidak terhubung.",
+        });
         return;
       }
 
@@ -72,6 +73,7 @@ export const useHandleLogin = (onLoginSuccess?: () => void) => {
         }
 
         /** Success - redirect to homepage (i18n router preserves locale automatically) */
+        setIsLoggingIn(false);
         if (onLoginSuccess) {
           onLoginSuccess();
         }

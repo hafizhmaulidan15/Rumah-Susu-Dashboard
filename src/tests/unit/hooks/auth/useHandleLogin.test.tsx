@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
 
 import { useHandleLogin } from "@/hooks/auth/useHandleLogin";
 import { signIn as _signIn } from "@/services/auth/auth-client";
@@ -9,6 +10,10 @@ const signIn = _signIn as NonNullable<typeof _signIn>;
 
 vi.mock("@/utils/presentationMode", () => ({
   isPresentationModeClient: vi.fn(() => false),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: vi.fn() },
 }));
 
 describe("useHandleLogin", () => {
@@ -125,12 +130,11 @@ describe("useHandleLogin", () => {
     expect(onLoginSuccess).toHaveBeenCalled();
   });
 
-  it("shows alert in presentation mode", async () => {
+  it("shows toast in presentation mode", async () => {
     const { isPresentationModeClient } =
       await import("@/utils/presentationMode");
     vi.mocked(isPresentationModeClient).mockReturnValue(true);
 
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
     const { result } = renderHook(() => useHandleLogin());
 
     await act(async () => {
@@ -140,9 +144,8 @@ describe("useHandleLogin", () => {
       );
     });
 
-    expect(alertSpy).toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalled();
     expect(signIn.email).not.toHaveBeenCalled();
-    alertSpy.mockRestore();
     vi.mocked(isPresentationModeClient).mockReturnValue(false);
   });
 

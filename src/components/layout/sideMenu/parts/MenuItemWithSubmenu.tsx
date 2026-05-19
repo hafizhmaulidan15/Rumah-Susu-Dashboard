@@ -139,10 +139,12 @@ export const MenuItemWithSubmenu = ({
     if (!isCollapsed) setIsDropdownOpen(false);
   }, [isCollapsed]);
 
-  if (prevCollapsedRef.current !== isCollapsed) {
-    prevCollapsedRef.current = isCollapsed;
-    setHasEnteredSinceCollapse(false);
-  }
+  useEffect(() => {
+    if (prevCollapsedRef.current !== isCollapsed) {
+      prevCollapsedRef.current = isCollapsed;
+      setHasEnteredSinceCollapse(false);
+    }
+  }, [isCollapsed]);
 
   /**
    * Keyboard navigation for submenu toggle and traversal. Enter/Space toggles,

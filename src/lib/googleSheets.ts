@@ -25,9 +25,11 @@ export const SHEETS = [
   { key: "Stock Tray Tasik", label: "Stock Tray Tasik", unit: "Pcs" },
 ];
 
-export const GOOGLE_SCRIPT_URL =
-  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
-  "https://script.google.com/macros/s/AKfycbzR4LzWzTgBvEcjfg9z4K31baf2-CNB5InQNPOLn3ko-AVwYT1Cgc969KVzEnmt5_pjsA/exec";
+const rawUrl = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL;
+if (!rawUrl) {
+  throw new Error("NEXT_PUBLIC_GOOGLE_SCRIPT_URL wajib diisi di .env.local");
+}
+export const GOOGLE_SCRIPT_URL = rawUrl;
 
 export const INVENTORY_SHEET_KEYS = SHEETS.filter(
   (s) => s.key !== "summary",
@@ -57,6 +59,7 @@ export async function fetchAllSheetsSummary() {
 
   try {
     const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (error) {
     console.error(error);

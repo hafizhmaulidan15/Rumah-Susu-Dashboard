@@ -1,12 +1,13 @@
 import { Metadata } from "next";
 
 import { PageWrapper } from "@/components/common/PageWrapper";
-import { TablesView } from "@/components/views/tables/TablesView";
 
 const TablesPage = () => {
   return (
     <PageWrapper pageName="Tables">
-      <TablesView />
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        Tables — coming soon
+      </div>
     </PageWrapper>
   );
 };

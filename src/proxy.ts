@@ -39,28 +39,71 @@ function withNoStore(response: NextResponse) {
   return response;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Content-Security-Policy (nonce-based)                             */
+/* ------------------------------------------------------------------ */
+
+function generateCSP(nonce: string): string {
+  const isDev = process.env.NODE_ENV === "development";
+  const connectSrc = [
+    "'self'",
+    "https://raw.githubusercontent.com",
+    "https://script.google.com",
+    "https://script.googleusercontent.com",
+    "https://p.typekit.net",
+    ...(process.env.NEXT_PUBLIC_AUTH_URL
+      ? [new URL(process.env.NEXT_PUBLIC_AUTH_URL).origin]
+      : []),
+    ...(isDev ? ["http://localhost:4000"] : []),
+  ].join(" ");
+
+  return [
+    `default-src 'self'`,
+    `worker-src 'self'`,
+    `script-src 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+    `img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com`,
+    `font-src 'self' data: https://fonts.gstatic.com`,
+    `connect-src ${connectSrc}`,
+    `frame-ancestors 'none'`,
+    `frame-src 'none'`,
+    `object-src 'none'`,
+    `base-uri 'none'`,
+  ].join("; ");
+}
+
+/* ------------------------------------------------------------------ */
+/*  Middleware                                                         */
+/* ------------------------------------------------------------------ */
+
 const proxy = (request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
+  const nonce = crypto.randomUUID();
+
+  const addSecurityHeaders = (response: NextResponse) => {
+    response.headers.set("Content-Security-Policy", generateCSP(nonce));
+    return withNoStore(response);
+  };
 
   /** Public paths - always accessible. */
   if (isPublicPath(pathname)) {
-    return withNoStore(handleI18nRouting(request));
+    return addSecurityHeaders(handleI18nRouting(request));
   }
 
   /** No auth configured - standalone demo mode, skip protection. */
   if (!isAuthConfigured()) {
-    return withNoStore(handleI18nRouting(request));
+    return addSecurityHeaders(handleI18nRouting(request));
   }
 
   /** Auth configured - check session. */
   const sessionCookie = getSessionCookie(request);
   if (sessionCookie) {
-    return withNoStore(handleI18nRouting(request));
+    return addSecurityHeaders(handleI18nRouting(request));
   }
 
   /** No session - redirect to login. */
   const locale = pathname.match(/^\/([a-z]{2})\//)?.at(1) || "";
-  return withNoStore(
+  return addSecurityHeaders(
     NextResponse.redirect(
       new URL(`/${locale ? locale + "/" : ""}login`, request.url),
     ),
@@ -70,5 +113,5 @@ const proxy = (request: NextRequest) => {
 export default proxy;
 
 export const config = {
-  matcher: "/((?!_next|_vercel|api|trpc|.*\\..*).*)",
+  matcher: ["/((?!api|_next|_vercel|trpc|.*\\..*).*)"],
 };

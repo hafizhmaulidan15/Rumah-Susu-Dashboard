@@ -23,7 +23,7 @@ export const usePWA = () => {
         ...cacheNames
           .filter((n) => !n.startsWith(SW_CACHE_PREFIX))
           .map((n) => caches.delete(n)),
-      ]);
+      ]).catch(() => {});
 
       try {
         await navigator.serviceWorker.register(SW_URL);

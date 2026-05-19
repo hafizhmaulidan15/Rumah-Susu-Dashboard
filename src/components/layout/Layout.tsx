@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { ReactNode, useEffect, useRef, useState } from "react";
+import { Toaster } from "sonner";
 
 import { ActivePOProvider } from "@/context/ActivePOContext";
 import { useFontManager } from "@/hooks/useFontManager";
@@ -13,7 +14,6 @@ import { useLayoutStore } from "@/store/layoutStore";
 import { FullScreenLoader, LOADER_DURATION_MS } from "./FullScreenLoader";
 import { Navbar } from "./navbar/Navbar";
 import { SideMenu } from "./sideMenu/SideMenu";
-import { ToastContainer } from "./ToastContainer";
 
 interface LayoutProps {
   children: ReactNode;
@@ -54,7 +54,10 @@ export const Layout = ({ children }: LayoutProps) => {
 
   /** Set dark as default theme if stored theme is not recognized */
   useEffect(() => {
-    const storedTheme = localStorage.getItem("theme");
+    let storedTheme: string | null = null;
+    try {
+      storedTheme = localStorage.getItem("theme");
+    } catch {}
 
     if (storedTheme && !themes.includes(storedTheme)) {
       setTheme("dark");
@@ -123,7 +126,22 @@ export const Layout = ({ children }: LayoutProps) => {
           aria-hidden={!isMobileMenuOpen}
         />
       </div>
-      <ToastContainer />
+      <Toaster
+        richColors
+        closeButton
+        position="bottom-center"
+        gap={12}
+        visibleToasts={4}
+        expand
+        toastOptions={{
+          duration: 4000,
+          classNames: {
+            toast: "shadow-lg",
+            title: "text-sm font-semibold",
+            description: "text-xs opacity-80",
+          },
+        }}
+      />
     </>
   );
 };

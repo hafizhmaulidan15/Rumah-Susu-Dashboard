@@ -1,3 +1,6 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import { SpinnerIcon } from "@/assets/icons/SpinnerIcon";
 import {
   Dialog,
@@ -14,8 +17,7 @@ export const ChangelogModal = ({
   closeModal,
   returnFocusRef,
 }: ChangelogModalProps) => {
-  const { changelogContent, isLoading, error, formatMarkdown } =
-    useChangelogModal();
+  const { changelogContent, isLoading, error } = useChangelogModal();
   const { scrollRef, handleKeyDown, handleOpenAutoFocus } =
     useModalKeyboardScroll();
 
@@ -47,12 +49,11 @@ export const ChangelogModal = ({
             ) : error ? (
               <div className="text-red-500 text-center py-5">{error}</div>
             ) : (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: formatMarkdown(changelogContent),
-                }}
-                className="pb-4"
-              />
+              <div className="pb-4 [&_h2]:text-primaryText [&_h2]:text-3xl [&_h2]:mb-4 [&_h3]:text-secondaryText [&_h3]:text-xl [&_h3]:mt-4 [&_h4]:text-secondaryText [&_h4]:mt-4 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:pl-3 [&_li]:text-primaryText [&_p]:mb-4 [&_p]:text-base [&_code]:bg-gray-100 [&_code]:dark:bg-gray-800 [&_code]:px-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:dark:bg-gray-800 [&_pre]:p-2 [&_pre]:rounded [&_pre]:my-2 [&_pre]:font-mono [&_pre]:text-sm [&_pre]:overflow-x-auto [&_hr]:my-4">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {changelogContent}
+                </ReactMarkdown>
+              </div>
             )}
           </div>
         </div>

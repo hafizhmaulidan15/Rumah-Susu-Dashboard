@@ -42,14 +42,16 @@ export const MenuItem = ({ title, icon, path }: MenuItemProps) => {
     setIsActive(normalizedPathname === normalizedPath);
   }, [currentPathname, path]);
 
+  useEffect(() => {
+    if (prevCollapsedRef.current !== isCollapsed) {
+      prevCollapsedRef.current = isCollapsed;
+      setHasEnteredSinceCollapse(false);
+    }
+  }, [isCollapsed]);
+
   /** First render check needed to prevent hydration mismatch errors */
   const isFirstRender = useIsFirstRender();
   if (isFirstRender) return null;
-
-  if (prevCollapsedRef.current !== isCollapsed) {
-    prevCollapsedRef.current = isCollapsed;
-    setHasEnteredSinceCollapse(false);
-  }
 
   const showTooltip = isCollapsed && hasEnteredSinceCollapse;
 

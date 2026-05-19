@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { signOut } from "@/services/auth/auth-client";
 import { useLayoutStore } from "@/store/layoutStore";
@@ -21,9 +22,9 @@ export const useHandleLogout = () => {
   const handleLogout = async () => {
     /** Check if running in presentation mode (no backend) */
     if (isPresentationModeClient()) {
-      alert(
-        "Authentication is disabled in the presentation mode. Check README.md to find information on how to connect the backend to make it work.\n\nIf you already configured .env, please remember that npm run build must be run before npm start for changes to take effect. This is not needed when using npm run dev.",
-      );
+      toast.error("Logout tidak tersedia", {
+        description: "Mode presentasi aktif. Backend tidak terhubung.",
+      });
       return;
     }
 

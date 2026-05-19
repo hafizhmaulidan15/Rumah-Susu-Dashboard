@@ -75,13 +75,28 @@ export const AddDialog = ({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  function safeGet(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+  function safeSet(key: string, val: string) {
+    try {
+      localStorage.setItem(key, val);
+    } catch {
+      /* noop */
+    }
+  }
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      let apiKey = localStorage.getItem("rsi_admin_key");
+      let apiKey = safeGet("rsi_admin_key");
       if (!apiKey) {
         apiKey = window.prompt("Masukkan PIN Admin untuk melakukan perubahan:");
-        if (apiKey) localStorage.setItem("rsi_admin_key", apiKey);
+        if (apiKey) safeSet("rsi_admin_key", apiKey);
         else {
           setIsSubmitting(false);
           return;
@@ -115,7 +130,7 @@ export const AddDialog = ({
       const result = await response.json();
       if (!response.ok || result?.success === false || result?.error) {
         if (response.status === 401) {
-          localStorage.removeItem("rsi_admin_key");
+          safeSet("rsi_admin_key", "");
           throw new Error("PIN Admin salah!");
         }
         throw new Error(result?.error || "Gagal menyimpan data");

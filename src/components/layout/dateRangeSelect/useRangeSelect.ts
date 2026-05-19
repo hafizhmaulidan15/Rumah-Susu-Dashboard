@@ -1,12 +1,12 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
 import type DatePicker from "react-datepicker";
+import { toast } from "sonner";
 
 import { useIsFirstRender } from "@/hooks/useIsFirstRender";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { CustomDateRange, DateRangePreset } from "@/store/dateRangeStore";
 import { useDateRangeStore } from "@/store/dateRangeStore";
-import { useToastStore } from "@/store/toastStore";
 import { BREAKPOINTS } from "@/styles/breakpoints";
 
 import type { CustomDateRangeDialogProps } from "./types";
@@ -51,18 +51,14 @@ export const useRangeSelect = () => {
   const setSelectedPreset = useDateRangeStore((s) => s.setSelectedPreset);
   const setCustomRange = useDateRangeStore((s) => s.setCustomRange);
 
-  const showToast = useToastStore((s) => s.showToast);
-
   const handlePresetSelect = (preset: Exclude<DateRangePreset, "custom">) => {
     setSelectedPreset(preset);
     setMenuOpen(false);
     const label = t(preset);
     const lowerLabel = label.charAt(0).toLowerCase() + label.slice(1);
-    showToast(
-      "success",
-      "Global date range updated",
-      `Showing data for ${lowerLabel}`,
-    );
+    toast.success("Global date range updated", {
+      description: `Showing data for ${lowerLabel}`,
+    });
   };
 
   const handleCustomRangeClick = () => {
@@ -74,13 +70,11 @@ export const useRangeSelect = () => {
     (range: CustomDateRange) => {
       setCustomRange(range);
       const label = formatCustomLabel(range, locale);
-      showToast(
-        "success",
-        "Global date range updated",
-        `Showing data for ${label}`,
-      );
+      toast.success("Global date range updated", {
+        description: `Showing data for ${label}`,
+      });
     },
-    [setCustomRange, locale, showToast],
+    [setCustomRange, locale],
   );
 
   /**
