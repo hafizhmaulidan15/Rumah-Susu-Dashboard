@@ -257,7 +257,14 @@ export const RSIDashboardView = () => {
               Total Warehouse Stock
             </p>
             <h3 className="text-4xl font-black tabular-nums">
-              {showStocksPending ? "---" : format.number(totalStockValue)}
+              {showStocksPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full border-2 border-zinc-600 border-t-mainColor animate-spin"></div>
+                  <span className="text-xl">Memuat...</span>
+                </div>
+              ) : (
+                format.number(totalStockValue)
+              )}
             </h3>
             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-mainColor">
               <Zap className="w-3 h-3 fill-current" /> Live from Google Sheets
@@ -272,9 +279,9 @@ export const RSIDashboardView = () => {
               Critical Alerts
             </p>
             <h3
-              className={`text-4xl font-black tabular-nums ${lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
+              className={`text-4xl font-black tabular-nums ${showStocksPending ? "text-zinc-300" : lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
             >
-              {showStocksPending ? "---" : lowStockItems.length}
+              {showStocksPending ? "..." : lowStockItems.length}
             </h3>
             <div
               className={`mt-4 inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[10px] font-bold ${lowStockItems.length > 0 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}
