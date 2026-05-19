@@ -27,9 +27,9 @@ export const SHEETS = [
 
 const rawUrl = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL;
 if (!rawUrl) {
-  throw new Error("NEXT_PUBLIC_GOOGLE_SCRIPT_URL wajib diisi di .env.local");
+  console.warn("NEXT_PUBLIC_GOOGLE_SCRIPT_URL wajib diisi di .env.local");
 }
-export const GOOGLE_SCRIPT_URL = rawUrl;
+export const GOOGLE_SCRIPT_URL = rawUrl || "";
 
 export const INVENTORY_SHEET_KEYS = SHEETS.filter(
   (s) => s.key !== "summary",
