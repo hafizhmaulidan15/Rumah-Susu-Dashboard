@@ -44,6 +44,7 @@ export const SideMenuMobile = ({ isMobileMenuOpen }: SideMenuMobileProps) => {
     <nav
       aria-label="Mobile navigation"
       aria-hidden={!isMobileMenuOpen}
+      inert={!isMobileMenuOpen}
       className={`z-50 flex fixed xl:hidden flex-col bg-primaryBg border-r-[1px] border-mainBorder top-18 xl:top-16 2xl:top-18 left-0 transform transition-transform duration-300 ease-in-out ${
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       }`}
