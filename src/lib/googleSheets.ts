@@ -54,19 +54,6 @@ export async function fetchGoogleSheetData(sheet: string = "susu") {
   }
 }
 
-export async function fetchAllSheetsSummary() {
-  const url = `${GOOGLE_SCRIPT_URL}?action=summary`;
-
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
-
 type SheetStockRow = {
   row?: number | string;
   Tgl?: string;

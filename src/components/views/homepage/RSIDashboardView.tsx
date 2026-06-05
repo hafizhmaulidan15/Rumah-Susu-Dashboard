@@ -2,23 +2,18 @@
 
 import {
   AlertTriangle,
-  ArrowRight,
   Box,
-  CheckCircle2,
-  ChevronRight,
   ClipboardList,
   Clock,
   GlassWater,
   Layers,
   LayoutDashboard,
-  LayoutGrid,
   Milk,
   PackageSearch,
   PlusCircle,
   RefreshCcw,
   Search,
   ShieldCheck,
-  TrendingDown,
   Zap,
 } from "lucide-react";
 import { useFormatter } from "next-intl";
@@ -31,7 +26,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/shadcn/card";
-import { Progress } from "@/components/common/shadcn/progress";
 import { CUP_PO_KEYS, useActivePO } from "@/context/ActivePOContext";
 import { Link } from "@/i18n/navigation";
 import {
@@ -187,7 +181,7 @@ export const RSIDashboardView = () => {
   }, [stockMap]);
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6 pb-12 animate-in fade-in duration-700">
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
       {isStocksError && Object.keys(stockMap).length === 0 && (
         <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400">
           Gagal memuat data dari Google Sheets. Coba Refresh atau periksa
@@ -203,7 +197,7 @@ export const RSIDashboardView = () => {
           </div>
           <div>
             <h1 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
-              Warehouse Overview
+              Rumah Susu Indonesia - Warehouse Tasik
             </h1>
             <div className="flex items-center gap-3 text-[13px] font-semibold text-zinc-400 mt-0.5">
               <span className="flex items-center gap-1.5">
@@ -230,6 +224,7 @@ export const RSIDashboardView = () => {
             <input
               type="text"
               placeholder="Search inventory..."
+              aria-label="Search inventory"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-mainColor/10 transition-all"
@@ -238,6 +233,7 @@ export const RSIDashboardView = () => {
           <Button
             variant="outline"
             size="icon"
+            aria-label="Refresh stock data"
             onClick={handleRefresh}
             disabled={isStocksLoading || isRefreshing}
             className="rounded-2xl h-[46px] w-[46px] border-zinc-100 dark:border-zinc-800"
@@ -253,10 +249,10 @@ export const RSIDashboardView = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-zinc-900 border-none text-white shadow-xl relative overflow-hidden group">
           <CardContent className="p-6 relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
               Total Warehouse Stock
             </p>
-            <h3 className="text-4xl font-black tabular-nums">
+            <h2 className="text-4xl font-black tabular-nums">
               {showStocksPending ? (
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full border-2 border-zinc-600 border-t-mainColor animate-spin"></div>
@@ -265,7 +261,7 @@ export const RSIDashboardView = () => {
               ) : (
                 format.number(totalStockValue)
               )}
-            </h3>
+            </h2>
             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-mainColor">
               <Zap className="w-3 h-3 fill-current" /> Live from Google Sheets
             </div>
@@ -278,11 +274,11 @@ export const RSIDashboardView = () => {
             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
               Critical Alerts
             </p>
-            <h3
+            <h2
               className={`text-4xl font-black tabular-nums ${showStocksPending ? "text-zinc-300" : lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
             >
               {showStocksPending ? "..." : lowStockItems.length}
-            </h3>
+            </h2>
             <div
               className={`mt-4 inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[10px] font-bold ${lowStockItems.length > 0 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}
             >
@@ -303,9 +299,9 @@ export const RSIDashboardView = () => {
             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
               PO Aktif (Tampilan Cup)
             </p>
-            <h3 className="text-4xl font-black text-zinc-900 dark:text-white tabular-nums">
+            <h2 className="text-4xl font-black text-zinc-900 dark:text-white tabular-nums">
               {poCount}
-            </h3>
+            </h2>
             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-zinc-400">
               <ClipboardList className="w-3 h-3" /> Sesi tab (refresh OK)
             </div>
@@ -329,111 +325,122 @@ export const RSIDashboardView = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
         {/* Left: Product Categories (3 columns on LG) */}
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(groupedData).map(([category, items]) => {
-            const style =
-              categoryStyles[category] || categoryStyles["Inventory Items"];
-            return (
-              <Card
-                key={category}
-                className="overflow-hidden border-zinc-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md"
-              >
-                <div
-                  className={`px-6 py-5 border-b border-zinc-50 dark:border-zinc-800 flex items-center justify-between ${style.bg}`}
+          {Object.entries(groupedData).length === 0 && searchQuery ? (
+            <div className="col-span-full text-center py-16 text-zinc-400">
+              <PackageSearch className="w-12 h-12 mx-auto mb-3 opacity-40" />
+              <p className="font-semibold">
+                {`Tidak ada hasil untuk "${searchQuery}"`}
+              </p>
+            </div>
+          ) : (
+            Object.entries(groupedData).map(([category, items]) => {
+              const style =
+                categoryStyles[category] || categoryStyles["Inventory Items"];
+              return (
+                <Card
+                  key={category}
+                  className="overflow-hidden border-zinc-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white dark:bg-zinc-950 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-800">
-                      {categoryIcons[category]}
+                  <div
+                    className={`px-6 py-5 border-b border-zinc-50 dark:border-zinc-800 flex items-center justify-between ${style.bg}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white dark:bg-zinc-950 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-800">
+                        {categoryIcons[category]}
+                      </div>
+                      <h3 className="font-black text-zinc-900 dark:text-white text-base tracking-tight uppercase">
+                        {category}
+                      </h3>
                     </div>
-                    <h3 className="font-black text-zinc-900 dark:text-white text-base tracking-tight uppercase">
-                      {category}
-                    </h3>
+                    <span className="text-[10px] font-black bg-white dark:bg-white/10 px-3 py-1 rounded-full text-zinc-500 shadow-sm">
+                      {items.length} Units
+                    </span>
                   </div>
-                  <span className="text-[10px] font-black bg-white dark:bg-white/10 px-3 py-1 rounded-full text-zinc-500 shadow-sm">
-                    {items.length} Units
-                  </span>
-                </div>
-                <div className="divide-y divide-zinc-50 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
-                  {items.map((item) => (
-                    <Link
-                      key={item.key}
-                      href={sheetToUrl[item.key] || "#"}
-                      className="flex flex-col px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-950/40 transition-colors group"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[15px] font-bold text-zinc-700 dark:text-zinc-300 group-hover:text-mainColor transition-colors">
-                          {item.label}
-                        </span>
-                        <div className="text-right flex flex-col items-end">
+                  <div className="divide-y divide-zinc-50 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
+                    {items.map((item) => (
+                      <Link
+                        key={item.key}
+                        href={sheetToUrl[item.key] || "#"}
+                        className="flex flex-col px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-950/40 transition-colors group"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[15px] font-bold text-zinc-700 dark:text-zinc-300 group-hover:text-mainColor transition-colors">
+                            {item.label}
+                          </span>
+                          <div className="text-right flex flex-col items-end">
+                            <span
+                              className={`text-sm font-black tabular-nums ${item.isLow ? "text-red-500" : "text-zinc-900 dark:text-white"}`}
+                            >
+                              {showStocksPending
+                                ? "---"
+                                : format.number(item.stock)}
+                            </span>
+                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+                              {item.unit}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="h-2 flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-transform duration-1000 ${item.isLow ? "bg-red-500" : style.accent}`}
+                              style={{
+                                transform: `scaleX(${Math.min(item.stock / ((LOW_STOCK_THRESHOLDS[item.key] ?? 500) * 10), 1)})`,
+                                transformOrigin: "left",
+                              }}
+                            />
+                          </div>
                           <span
-                            className={`text-sm font-black tabular-nums ${item.isLow ? "text-red-500" : "text-zinc-900 dark:text-white"}`}
+                            className={`text-[9px] font-black uppercase tracking-tighter ${item.isLow ? "text-red-500 animate-pulse" : "text-zinc-400"}`}
                           >
-                            {showStocksPending
-                              ? "---"
-                              : format.number(item.stock)}
-                          </span>
-                          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
-                            {item.unit}
+                            {item.isLow ? "Critical" : "Healthy"}
                           </span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="h-2 flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-1000 ${item.isLow ? "bg-red-500" : style.accent}`}
-                            style={{
-                              width: `${Math.min((item.stock / 5000) * 100, 100)}%`,
-                            }}
-                          />
-                        </div>
-                        <span
-                          className={`text-[9px] font-black uppercase tracking-tighter ${item.isLow ? "text-red-500 animate-pulse" : "text-zinc-400"}`}
-                        >
-                          {item.isLow ? "Critical" : "Healthy"}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </Card>
-            );
-          })}
+                      </Link>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Right: Focused Alerts */}
         <div className="space-y-6 lg:sticky lg:top-6">
           <Card className="border-none bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xl overflow-hidden">
-            <CardHeader className="p-5 border-b border-white/5 dark:border-zinc-50">
-              <CardTitle className="text-base font-black flex items-center gap-2 uppercase tracking-wider">
+            <CardHeader className="p-5 border-b border-white/5 dark:border-zinc-300">
+              <CardTitle className="text-base font-black flex items-center gap-2 uppercase tracking-wider text-white dark:text-zinc-900">
                 <AlertTriangle className="w-5 h-5 text-red-500" /> Stock Alerts
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {showStocksPending ? (
-                <p className="p-8 text-center text-sm font-semibold opacity-60">
+                <p className="p-8 text-center text-sm font-semibold text-white/60 dark:text-zinc-900/60">
                   Memuat data stok...
                 </p>
               ) : lowStockItems.length > 0 ? (
-                <div className="divide-y divide-white/5 dark:divide-zinc-50 max-h-[380px] overflow-y-auto">
+                <div className="divide-y divide-white/5 dark:divide-zinc-300 max-h-[380px] overflow-y-auto">
                   {lowStockItems.map((item) => (
                     <div
                       key={item.key}
-                      className="p-5 flex items-center justify-between group hover:bg-white/5 dark:hover:bg-zinc-50 transition-colors"
+                      className="p-5 flex items-center justify-between group hover:bg-white/5 dark:hover:bg-zinc-100 transition-colors"
                     >
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm font-bold opacity-90">
+                        <span className="text-sm font-bold text-white dark:text-zinc-900">
                           {item.label}
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-black text-red-500">
                             {format.number(item.stock)}
                           </span>
-                          <span className="text-[9px] font-bold opacity-40 uppercase tracking-tighter">
+                          <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">
                             {item.unit} Left
                           </span>
                         </div>
                       </div>
                       <Link
-                        href="/purchase-order"
+                        href={sheetToUrl[item.key] || "/purchase-order"}
+                        aria-label={`Buat PO untuk ${item.label}`}
                         className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
                       >
                         <PlusCircle className="w-5 h-5" />
@@ -447,8 +454,10 @@ export const RSIDashboardView = () => {
                     <ShieldCheck className="w-8 h-8 text-emerald-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-black">All Good!</p>
-                    <p className="text-[11px] opacity-50 mt-1">
+                    <p className="text-sm font-black text-white dark:text-zinc-900">
+                      All Good!
+                    </p>
+                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
                       No items need restocking.
                     </p>
                   </div>

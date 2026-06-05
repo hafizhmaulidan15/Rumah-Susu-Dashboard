@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
+import { ViewTransitionProvider } from "@/components/providers/ViewTransitionProvider";
 import { getSession } from "@/services/auth/auth-server";
 import { isPresentationMode } from "@/utils/presentationMode";
 
@@ -22,15 +23,13 @@ export default async function ProtectedLayout({
 
   setRequestLocale(locale);
 
-  if (isPresentationMode()) {
-    return <>{children}</>;
+  if (!isPresentationMode()) {
+    const session = await getSession();
+
+    if (!session) {
+      redirect(`/${locale}/login`);
+    }
   }
 
-  const session = await getSession();
-
-  if (!session) {
-    redirect(`/${locale}/login`);
-  }
-
-  return <>{children}</>;
+  return <ViewTransitionProvider>{children}</ViewTransitionProvider>;
 }

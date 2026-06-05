@@ -307,3 +307,40 @@ input:-webkit-autofill:active {
     transition-duration: var(--default-transition-duration);
   }
 }
+
+/* View Transitions API */
+::view-transition-old(page-content) {
+  animation:
+    vtr-fade-out 200ms ease-out,
+    vtr-slide-to-left 200ms ease-out;
+}
+
+::view-transition-new(page-content) {
+  animation:
+    vtr-fade-in 250ms ease-in,
+    vtr-slide-from-right 250ms ease-in;
+}
+
+@keyframes vtr-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vtr-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vtr-slide-from-right {
+  from {
+    transform: translateX(30px);
+  }
+}
+
+@keyframes vtr-slide-to-left {
+  to {
+    transform: translateX(-30px);
+  }
+}

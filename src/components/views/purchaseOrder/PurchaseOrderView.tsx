@@ -18,7 +18,7 @@ import { SHEETS, useLatestSheetStocksMap } from "@/lib/data";
 
 export const PurchaseOrderView = () => {
   const format = useFormatter();
-  const { stockMap, isLoading } = useLatestSheetStocksMap();
+  const { stockMap, isLoading, isError } = useLatestSheetStocksMap();
   const { setCupPO } = useActivePO();
   const [region, setRegion] = useState("");
   const [poFromManagement, setPoFromManagement] = useState<
@@ -30,14 +30,17 @@ export const PurchaseOrderView = () => {
 
   const cupSheets = useMemo(
     () =>
-      SHEETS.filter((s) => s.key === "cup 130 ml" || s.key === "cup 175 ml"),
+      SHEETS.filter(
+        (s): s is typeof s & { key: CupPOKey } =>
+          s.key === "cup 130 ml" || s.key === "cup 175 ml",
+      ),
     [],
   );
 
   const poItems = useMemo(() => {
     return cupSheets.map((sheet) => {
       const currentStock = stockMap[sheet.key] ?? 0;
-      const mgmtPO = Number(poFromManagement[sheet.key as CupPOKey]) || 0;
+      const mgmtPO = Number(poFromManagement[sheet.key]) || 0;
       return { ...sheet, currentStock, mgmtPO };
     });
   }, [stockMap, cupSheets, poFromManagement]);
@@ -60,7 +63,7 @@ export const PurchaseOrderView = () => {
 
     const regionLabel = region.trim() || undefined;
     itemsWithQty.forEach((item) => {
-      setCupPO(item.key as CupPOKey, {
+      setCupPO(item.key, {
         quantity: item.mgmtPO,
         region: regionLabel,
       });
@@ -166,6 +169,22 @@ export const PurchaseOrderView = () => {
                     Loading...
                   </td>
                 </tr>
+              ) : isError ? (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="px-6 py-8 text-center text-secondaryText"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-red-500 font-semibold text-sm">
+                        Gagal memuat data stok
+                      </span>
+                      <span className="text-xs">
+                        Coba refresh halaman atau periksa koneksi.
+                      </span>
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 poItems.map((item) => (
                   <tr
@@ -182,10 +201,10 @@ export const PurchaseOrderView = () => {
                       <Input
                         type="text"
                         inputMode="numeric"
-                        value={poFromManagement[item.key as CupPOKey] ?? ""}
+                        value={poFromManagement[item.key] ?? ""}
                         placeholder="Contoh: 22200"
                         onChange={(e) =>
-                          handlePoChange(item.key as CupPOKey, e.target.value)
+                          handlePoChange(item.key, e.target.value)
                         }
                         className="h-10 text-base font-bold bg-white dark:bg-primaryBg border-mainColor/30 focus:border-mainColor w-full"
                       />

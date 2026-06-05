@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ArrowDownIcon } from "@/assets/icons/ArrowDownIcon";
 import { ArrowUpIcon } from "@/assets/icons/ArrowUpIcon";
@@ -38,11 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/common/shadcn/pagination";
-import {
-  type CupPOKey,
-  isCupPOKey,
-  useActivePO,
-} from "@/context/ActivePOContext";
+import { isCupPOKey, useActivePO } from "@/context/ActivePOContext";
 import { useSheetData } from "@/lib/data";
 import { getLatestStockFromRows } from "@/lib/googleSheets";
 
@@ -85,7 +81,7 @@ export const RSIInventoryView = ({
 }: RSIInventoryViewProps) => {
   const format = useFormatter();
   const displayUnit = sheetKey.startsWith("cup") ? "cp" : sheetUnit;
-  const { data, isLoading, mutate } = useSheetData(sheetKey);
+  const { data, isLoading, isError, mutate } = useSheetData(sheetKey);
   const { activePO, clearCupPO } = useActivePO();
   const cupPO = isCupPOKey(sheetKey) ? activePO[sheetKey] : undefined;
 
@@ -191,7 +187,7 @@ export const RSIInventoryView = ({
       header: "Request By",
       cell: ({ row }) => (
         <span className="text-primaryText text-sm">
-          {String(row.original["Request By"] || "-")}
+          {row.original["Request By"] || "-"}
         </span>
       ),
     },
@@ -200,7 +196,7 @@ export const RSIInventoryView = ({
       header: "No. SJ",
       cell: ({ row }) => (
         <span className="text-primaryText text-sm font-mono">
-          {String(row.original["No. SJ"] || "-")}
+          {row.original["No. SJ"] || "-"}
         </span>
       ),
     },
@@ -319,7 +315,9 @@ export const RSIInventoryView = ({
                 variant="ghost"
                 size="sm"
                 className="text-secondaryText hover:text-primaryText shrink-0"
-                onClick={() => clearCupPO(sheetKey as CupPOKey)}
+                onClick={() => {
+                  if (isCupPOKey(sheetKey)) clearCupPO(sheetKey);
+                }}
                 aria-label="Sembunyikan PO"
               >
                 <X className="w-4 h-4" />
@@ -351,6 +349,7 @@ export const RSIInventoryView = ({
             <input
               type="text"
               placeholder="Cari..."
+              aria-label="Cari data"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-4 py-2 text-sm bg-primaryBg border border-inputBorder rounded-lg text-primaryText placeholder:text-secondaryText focus:outline-none focus:ring-1 focus:ring-mainColor w-64"
@@ -369,6 +368,23 @@ export const RSIInventoryView = ({
                 <span className="text-secondaryText text-sm">
                   Memuat data...
                 </span>
+              </div>
+            </div>
+          ) : isError ? (
+            <div
+              role="alert"
+              className="flex items-center justify-center h-64 px-6"
+            >
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-red-500/10 mx-auto flex items-center justify-center">
+                  <span className="text-red-500 text-xl font-bold">!</span>
+                </div>
+                <p className="text-red-500 font-semibold text-sm">
+                  Gagal memuat data
+                </p>
+                <p className="text-secondaryText text-xs">
+                  Coba refresh halaman atau periksa koneksi Google Sheets.
+                </p>
               </div>
             </div>
           ) : filteredData.length === 0 ? (

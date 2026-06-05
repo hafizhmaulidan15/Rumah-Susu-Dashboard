@@ -3,7 +3,7 @@
 import "vitest-axe/extend-expect";
 
 declare module "vitest" {
-  interface Assertion<T = unknown> {
+  interface Assertion {
     toHaveNoViolations(): void;
   }
   interface AsymmetricMatchersContaining {

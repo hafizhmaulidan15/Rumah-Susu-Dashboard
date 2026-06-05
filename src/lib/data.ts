@@ -1,6 +1,6 @@
 import useSWR, { mutate as globalMutate } from "swr";
 
-import { GOOGLE_SCRIPT_URL, SHEET_MAP } from "@/lib/googleSheets";
+import { SHEET_MAP } from "@/lib/googleSheets";
 
 export { getLatestStockFromRows, SHEET_MAP, SHEETS } from "@/lib/googleSheets";
 
@@ -18,10 +18,6 @@ const fetcher = async (url: string) => {
 
 function getSheetCacheKey(sheet: string) {
   return `sheet-${sheet}`;
-}
-
-function getSummaryCacheKey() {
-  return "sheet-summary";
 }
 
 function getLatestStocksCacheKey() {
@@ -80,7 +76,7 @@ export function useSheetData(sheet: string) {
     revalidateIfStale: true,
     dedupingInterval: 2000,
     errorRetryCount: 3,
-    loadingTimeout: 3000,
+    loadingTimeout: 30000,
   });
 
   return {
@@ -95,16 +91,11 @@ export function invalidateSheetCache(sheet: string) {
   globalMutate(getSheetCacheKey(sheet), undefined, { revalidate: true });
 }
 
-export function invalidateSummaryCache() {
-  globalMutate(getSummaryCacheKey(), undefined, { revalidate: true });
-}
-
 export function invalidateAllCaches() {
   globalMutate(() => true, undefined, { revalidate: true });
 }
 
 export function invalidateRelatedCaches(sheet: string) {
   invalidateSheetCache(sheet);
-  invalidateSummaryCache();
   globalMutate(getLatestStocksCacheKey(), undefined, { revalidate: true });
 }
