@@ -335,10 +335,11 @@ export const RSIInventoryView = ({
         </div>
         <Button
           onClick={() => setAddOpen(true)}
+          size="sm"
           className="gap-2 bg-mainColor hover:bg-mainColor/90 text-black"
         >
           <Plus className="h-4 w-4" />
-          Tambah
+          <span className="hidden sm:inline">Tambah</span>
         </Button>
       </div>
 
@@ -352,7 +353,7 @@ export const RSIInventoryView = ({
               aria-label="Cari data"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm bg-primaryBg border border-inputBorder rounded-lg text-primaryText placeholder:text-secondaryText focus:outline-none focus:ring-1 focus:ring-mainColor w-64"
+              className="pl-9 pr-4 py-2 text-sm bg-primaryBg border border-inputBorder rounded-lg text-primaryText placeholder:text-secondaryText focus:outline-none focus:ring-1 focus:ring-mainColor w-40 sm:w-64"
             />
           </div>
           <div className="text-sm text-secondaryText">
@@ -394,64 +395,77 @@ export const RSIInventoryView = ({
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table
-                  className="w-full min-w-[800px]"
-                  style={{ tableLayout: "fixed" }}
-                >
+                <table className="w-full" style={{ tableLayout: "fixed" }}>
                   <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header, index) => (
-                          <th
-                            key={header.id}
-                            scope="col"
-                            className={`text-secondaryText font-medium text-left text-sm px-4 py-3 whitespace-nowrap border-t border-b border-inputBorder bg-tableHeaderBg ${
-                              index === 0 ? "border-l" : ""
-                            } ${
-                              index === headerGroup.headers.length - 1
-                                ? "border-r"
-                                : ""
-                            } ${
-                              header.column.getCanSort()
-                                ? "cursor-pointer select-none hover:bg-tableHeaderBgHover"
-                                : ""
-                            }`}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            <div className="flex items-center">
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                              <SortingArrow
-                                isSorted={header.column.getIsSorted()}
-                              />
-                            </div>
-                          </th>
-                        ))}
+                        {headerGroup.headers.map((header, index) => {
+                          const colId = header.column.id;
+                          const hideOnMobile = [
+                            "Keterangan",
+                            "Request By",
+                            "No. SJ",
+                          ].includes(colId);
+                          return (
+                            <th
+                              key={header.id}
+                              scope="col"
+                              className={`text-secondaryText font-medium text-left text-sm px-4 py-3 whitespace-nowrap border-t border-b border-inputBorder bg-tableHeaderBg ${
+                                index === 0 ? "border-l" : ""
+                              } ${
+                                index === headerGroup.headers.length - 1
+                                  ? "border-r"
+                                  : ""
+                              } ${
+                                header.column.getCanSort()
+                                  ? "cursor-pointer select-none hover:bg-tableHeaderBgHover"
+                                  : ""
+                              } ${hideOnMobile ? "hidden md:table-cell" : ""}`}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              <div className="flex items-center">
+                                {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                                <SortingArrow
+                                  isSorted={header.column.getIsSorted()}
+                                />
+                              </div>
+                            </th>
+                          );
+                        })}
                       </tr>
                     ))}
                   </thead>
                   <tbody>
                     {table.getRowModel().rows.map((row) => (
                       <tr key={row.id} className="hover:bg-tableRowBgHover">
-                        {row.getVisibleCells().map((cell, cellIndex) => (
-                          <td
-                            key={cell.id}
-                            className={`px-4 py-3 text-primaryText text-sm border-b border-mainBorder ${
-                              cellIndex === 0 ? "border-l" : ""
-                            } ${
-                              cellIndex === row.getVisibleCells().length - 1
-                                ? "border-r"
-                                : ""
-                            }`}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </td>
-                        ))}
+                        {row.getVisibleCells().map((cell, cellIndex) => {
+                          const colId = cell.column.id;
+                          const hideOnMobile = [
+                            "Keterangan",
+                            "Request By",
+                            "No. SJ",
+                          ].includes(colId);
+                          return (
+                            <td
+                              key={cell.id}
+                              className={`px-4 py-3 text-primaryText text-sm border-b border-mainBorder ${
+                                cellIndex === 0 ? "border-l" : ""
+                              } ${
+                                cellIndex === row.getVisibleCells().length - 1
+                                  ? "border-r"
+                                  : ""
+                              } ${hideOnMobile ? "hidden md:table-cell" : ""}`}
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
