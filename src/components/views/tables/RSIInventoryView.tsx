@@ -208,7 +208,7 @@ export const RSIInventoryView = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:text-mainColor"
+            className="h-9 w-9 sm:h-8 sm:w-8 hover:text-mainColor"
             onClick={() => setEditRow(row.original)}
             aria-label="Edit"
           >
@@ -217,7 +217,7 @@ export const RSIInventoryView = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:text-red-500"
+            className="h-9 w-9 sm:h-8 sm:w-8 hover:text-red-500"
             onClick={() => setDeleteRow(row.original)}
             aria-label="Delete"
           >
@@ -291,13 +291,13 @@ export const RSIInventoryView = ({
         <Card className="border-mainColor/30 bg-mainColor/5 shadow-sm">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 <ShoppingCart className="w-8 h-8 text-mainColor shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] text-secondaryText uppercase font-bold tracking-wider">
                     PO dari Management
                   </p>
-                  <p className="text-2xl font-black text-mainColor">
+                  <p className="text-xl sm:text-2xl font-black text-mainColor break-words">
                     {format.number(cupPO.quantity)}{" "}
                     <span className="text-sm font-normal text-secondaryText">
                       {displayUnit}
@@ -305,8 +305,8 @@ export const RSIInventoryView = ({
                   </p>
                   {cupPO.region && (
                     <p className="text-xs text-secondaryText flex items-center gap-1 mt-1">
-                      <MapPin className="w-3 h-3" />
-                      {cupPO.region}
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{cupPO.region}</span>
                     </p>
                   )}
                 </div>
@@ -328,15 +328,13 @@ export const RSIInventoryView = ({
       )}
 
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs text-secondaryText font-medium">
-            Unit: {displayUnit}
-          </p>
-        </div>
+        <p className="text-xs text-secondaryText font-medium shrink-0">
+          Unit: {displayUnit}
+        </p>
         <Button
           onClick={() => setAddOpen(true)}
           size="sm"
-          className="gap-2 bg-mainColor hover:bg-mainColor/90 text-black"
+          className="gap-2 bg-mainColor hover:bg-mainColor/90 text-black shrink-0"
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Tambah</span>
@@ -344,8 +342,8 @@ export const RSIInventoryView = ({
       </div>
 
       <Card>
-        <div className="flex items-center justify-between px-6 pt-6 pb-4">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 pt-6 pb-4">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondaryText" />
             <input
               type="text"
@@ -353,10 +351,10 @@ export const RSIInventoryView = ({
               aria-label="Cari data"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm bg-primaryBg border border-inputBorder rounded-lg text-primaryText placeholder:text-secondaryText focus:outline-none focus:ring-1 focus:ring-mainColor w-40 sm:w-64"
+              className="pl-9 pr-4 py-2 text-sm bg-primaryBg border border-inputBorder rounded-lg text-primaryText placeholder:text-secondaryText focus:outline-none focus:ring-1 focus:ring-mainColor w-full sm:w-48 md:w-64"
             />
           </div>
-          <div className="text-sm text-secondaryText">
+          <div className="text-xs sm:text-sm text-secondaryText shrink-0">
             {filteredData.length} data
           </div>
         </div>
@@ -395,22 +393,25 @@ export const RSIInventoryView = ({
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full" style={{ tableLayout: "fixed" }}>
+                <table className="w-full">
                   <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <tr key={headerGroup.id}>
                         {headerGroup.headers.map((header, index) => {
                           const colId = header.column.id;
-                          const hideOnMobile = [
-                            "Keterangan",
-                            "Request By",
-                            "No. SJ",
-                          ].includes(colId);
+                          const hideClasses =
+                            colId === "No. SJ"
+                              ? "hidden xl:table-cell"
+                              : colId === "Request By"
+                                ? "hidden lg:table-cell"
+                                : colId === "Keterangan"
+                                  ? "hidden md:table-cell"
+                                  : "";
                           return (
                             <th
                               key={header.id}
                               scope="col"
-                              className={`text-secondaryText font-medium text-left text-sm px-4 py-3 whitespace-nowrap border-t border-b border-inputBorder bg-tableHeaderBg ${
+                              className={`text-secondaryText font-medium text-left text-xs sm:text-sm px-2 sm:px-4 py-3 whitespace-nowrap border-t border-b border-inputBorder bg-tableHeaderBg ${
                                 index === 0 ? "border-l" : ""
                               } ${
                                 index === headerGroup.headers.length - 1
@@ -420,7 +421,7 @@ export const RSIInventoryView = ({
                                 header.column.getCanSort()
                                   ? "cursor-pointer select-none hover:bg-tableHeaderBgHover"
                                   : ""
-                              } ${hideOnMobile ? "hidden md:table-cell" : ""}`}
+                              } ${hideClasses}`}
                               onClick={header.column.getToggleSortingHandler()}
                             >
                               <div className="flex items-center">
@@ -443,21 +444,24 @@ export const RSIInventoryView = ({
                       <tr key={row.id} className="hover:bg-tableRowBgHover">
                         {row.getVisibleCells().map((cell, cellIndex) => {
                           const colId = cell.column.id;
-                          const hideOnMobile = [
-                            "Keterangan",
-                            "Request By",
-                            "No. SJ",
-                          ].includes(colId);
+                          const hideClasses =
+                            colId === "No. SJ"
+                              ? "hidden xl:table-cell"
+                              : colId === "Request By"
+                                ? "hidden lg:table-cell"
+                                : colId === "Keterangan"
+                                  ? "hidden md:table-cell"
+                                  : "";
                           return (
                             <td
                               key={cell.id}
-                              className={`px-4 py-3 text-primaryText text-sm border-b border-mainBorder ${
+                              className={`px-2 sm:px-4 py-3 text-primaryText text-xs sm:text-sm border-b border-mainBorder ${
                                 cellIndex === 0 ? "border-l" : ""
                               } ${
                                 cellIndex === row.getVisibleCells().length - 1
                                   ? "border-r"
                                   : ""
-                              } ${hideOnMobile ? "hidden md:table-cell" : ""}`}
+                              } ${hideClasses}`}
                             >
                               {flexRender(
                                 cell.column.columnDef.cell,
@@ -472,8 +476,8 @@ export const RSIInventoryView = ({
                 </table>
               </div>
 
-              <div className="flex items-center justify-between max-sm:flex-col max-sm:items-center max-sm:gap-6 px-4 mt-6">
-                <div className="text-sm text-secondaryText whitespace-nowrap">
+              <div className="flex items-center justify-between max-sm:flex-col max-sm:items-center max-sm:gap-3 px-4 mt-6">
+                <div className="text-xs sm:text-sm text-secondaryText whitespace-nowrap">
                   {t("showing")}{" "}
                   {table.getState().pagination.pageIndex *
                     table.getState().pagination.pageSize +
@@ -501,25 +505,32 @@ export const RSIInventoryView = ({
                     ).map((pageIndex) => {
                       const currentPage = table.getState().pagination.pageIndex;
                       const totalPages = table.getPageCount();
+                      const pageWindow =
+                        totalPages <= 5
+                          ? 1
+                          : currentPage <= 1 || currentPage >= totalPages - 2
+                            ? 1
+                            : 2;
                       if (
                         pageIndex === 0 ||
                         pageIndex === totalPages - 1 ||
-                        (pageIndex >= currentPage - 1 &&
-                          pageIndex <= currentPage + 1)
+                        (pageIndex >= currentPage - pageWindow &&
+                          pageIndex <= currentPage + pageWindow)
                       ) {
                         return (
                           <PaginationItem key={pageIndex}>
                             <PaginationLink
                               onClick={() => table.setPageIndex(pageIndex)}
                               isActive={pageIndex === currentPage}
+                              className="h-9 w-9 sm:h-8 sm:w-8"
                             >
                               {pageIndex + 1}
                             </PaginationLink>
                           </PaginationItem>
                         );
                       } else if (
-                        pageIndex === currentPage - 2 ||
-                        pageIndex === currentPage + 2
+                        pageIndex === currentPage - (pageWindow + 1) ||
+                        pageIndex === currentPage + (pageWindow + 1)
                       ) {
                         return (
                           <PaginationItem key={pageIndex}>
