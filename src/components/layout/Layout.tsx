@@ -99,7 +99,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <>
-      <div className="flex min-h-screen w-full bg-secondaryBg overflow-x-hidden">
+      <div className="flex min-h-screen w-full bg-secondaryBg">
         {showLoader && !isAuthPage && (
           <FullScreenLoader key="static-loader-key" />
         )}
