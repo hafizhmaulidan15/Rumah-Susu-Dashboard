@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/common/shadcn/button";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/common/shadcn/dialog";
 import { Input } from "@/components/common/shadcn/input";
 import { Label } from "@/components/common/shadcn/label";
+import { getAdminKey, setAdminKey } from "@/lib/admin-key";
 import { invalidateRelatedCaches } from "@/lib/data";
 
 interface AddDialogProps {
@@ -75,32 +77,17 @@ export const AddDialog = ({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  function safeGet(key: string): string | null {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
-  function safeSet(key: string, val: string) {
-    try {
-      localStorage.setItem(key, val);
-    } catch {
-      /* noop */
-    }
-  }
-
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      let apiKey = safeGet("rsi_admin_key");
+      let apiKey = getAdminKey();
       if (!apiKey) {
         apiKey = window.prompt("Masukkan PIN Admin untuk melakukan perubahan:");
-        if (apiKey) safeSet("rsi_admin_key", apiKey);
-        else {
+        if (!apiKey) {
           setIsSubmitting(false);
           return;
         }
+        setAdminKey(apiKey);
       }
 
       const inVal = tipe === "masuk" ? jumlah : 0;
@@ -112,7 +99,7 @@ export const AddDialog = ({
         date: new Date(formData.Tgl).toISOString(),
         in: inVal,
         out: outVal,
-        net: projectedStock, // Hanya untuk backward compatibility jika Apps Script belum diupdate
+        net: projectedStock,
         keterangan: formData.Keterangan || "-",
         requestBy: formData["Request By"] || "-",
         no_sj: formData["No. SJ"] || "-",
@@ -130,7 +117,7 @@ export const AddDialog = ({
       const result = await response.json();
       if (!response.ok || result?.success === false || result?.error) {
         if (response.status === 401) {
-          safeSet("rsi_admin_key", "");
+          setAdminKey(null);
           throw new Error("PIN Admin salah!");
         }
         throw new Error(result?.error || "Gagal menyimpan data");
@@ -145,10 +132,12 @@ export const AddDialog = ({
       });
       setTipe("masuk");
       invalidateRelatedCaches(sheetKey);
+      toast.success("Data berhasil ditambahkan");
       onSuccess();
     } catch (err) {
       console.error("Add failed:", err);
-      alert("Gagal menambahkan data. Silakan coba lagi.");
+      const msg = err instanceof Error ? err.message : "Gagal menambahkan data";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

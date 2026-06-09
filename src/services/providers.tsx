@@ -24,7 +24,7 @@ function suppressHydrationWarnings() {
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   usePWA();
-  useEffect(suppressHydrationWarnings, []);
+  useEffect(() => suppressHydrationWarnings(), []);
 
   return (
     <ThemeProvider

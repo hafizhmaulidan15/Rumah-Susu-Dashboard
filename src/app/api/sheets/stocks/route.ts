@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
-
 import {
-  NO_STORE_HEADERS,
+  forbidden,
+  isValidOrigin,
   SHEET_FETCH_TIMEOUT_MS,
   withTimeout,
 } from "@/lib/api-utils";
@@ -13,27 +12,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function isValidOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  const referer = request.headers.get("referer");
-  if (!origin && !referer) return true;
-  const host = request.headers.get("host") || "localhost:3000";
-  const allowed = [
-    `http://${host}`,
-    `https://${host}`,
-    "http://localhost:3000",
-  ];
-  const check = origin || referer || "";
-  return allowed.some((a) => check.startsWith(a));
-}
-
 export async function GET(request: Request) {
-  if (!isValidOrigin(request)) {
-    return NextResponse.json(
-      { error: "Forbidden" },
-      { status: 403, headers: NO_STORE_HEADERS },
-    );
-  }
+  if (!isValidOrigin(request)) return forbidden();
 
   try {
     const results = await Promise.allSettled(
@@ -62,19 +42,27 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json(
+    return new Response(
+      JSON.stringify({ stocks, failedSheets, ok: failedSheets.length === 0 }),
       {
-        stocks,
-        failedSheets,
-        ok: failedSheets.length === 0,
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
       },
-      { headers: NO_STORE_HEADERS },
     );
   } catch (error) {
     console.error("Stocks API error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error", ok: false },
-      { status: 500, headers: NO_STORE_HEADERS },
+    return new Response(
+      JSON.stringify({ error: "Internal Server Error", ok: false }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      },
     );
   }
 }

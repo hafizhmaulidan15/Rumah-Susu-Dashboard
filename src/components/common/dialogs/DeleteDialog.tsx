@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/common/shadcn/button";
 import {
@@ -10,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/common/shadcn/dialog";
+import { getAdminKey, setAdminKey } from "@/lib/admin-key";
 import { invalidateRelatedCaches } from "@/lib/data";
 
 interface DeleteDialogProps {
@@ -29,32 +31,17 @@ export const DeleteDialog = ({
 }: DeleteDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function safeGet(key: string): string | null {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
-  function safeSet(key: string, val: string) {
-    try {
-      localStorage.setItem(key, val);
-    } catch {
-      /* noop */
-    }
-  }
-
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
-      let apiKey = safeGet("rsi_admin_key");
+      let apiKey = getAdminKey();
       if (!apiKey) {
         apiKey = window.prompt("Masukkan PIN Admin untuk melakukan perubahan:");
-        if (apiKey) safeSet("rsi_admin_key", apiKey);
-        else {
+        if (!apiKey) {
           setIsSubmitting(false);
           return;
         }
+        setAdminKey(apiKey);
       }
 
       const response = await fetch("/api/gsheet", {
@@ -73,17 +60,19 @@ export const DeleteDialog = ({
       const result = await response.json();
       if (!response.ok || result?.success === false || result?.error) {
         if (response.status === 401) {
-          safeSet("rsi_admin_key", "");
+          setAdminKey(null);
           throw new Error("PIN Admin salah!");
         }
         throw new Error(result?.error || "Gagal menghapus data");
       }
 
       invalidateRelatedCaches(sheetKey);
+      toast.success("Data berhasil dihapus");
       onSuccess();
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Gagal menghapus data. Silakan coba lagi.");
+      const msg = err instanceof Error ? err.message : "Gagal menghapus data";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

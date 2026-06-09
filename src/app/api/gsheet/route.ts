@@ -1,6 +1,11 @@
-import { NextResponse } from "next/server";
-
-import { NO_STORE_HEADERS } from "@/lib/api-utils";
+import {
+  badRequest,
+  forbidden,
+  isValidOrigin,
+  rateLimit,
+  serverError,
+  unauthorized,
+} from "@/lib/api-utils";
 import { INVENTORY_SHEET_KEYS } from "@/lib/googleSheets";
 import { GOOGLE_SCRIPT_URL } from "@/lib/googleSheets";
 
@@ -20,77 +25,46 @@ const validateBody = (body: unknown): string | null => {
   return null;
 };
 
-function isValidOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  const referer = request.headers.get("referer");
-  if (!origin && !referer) return true;
-  const host = request.headers.get("host") || "localhost:3000";
-  const allowed = [
-    `http://${host}`,
-    `https://${host}`,
-    "http://localhost:3000",
-  ];
-  const check = origin || referer || "";
-  return allowed.some((a) => check.startsWith(a));
-}
-
 export async function POST(request: Request) {
+  if (rateLimit(request)) return badRequest("Too many requests");
+
+  if (!isValidOrigin(request)) return forbidden();
+
+  const apiKey = request.headers.get("x-api-key");
+  if (!apiKey || apiKey !== process.env.API_SECRET_KEY) return unauthorized();
+
   try {
-    if (!isValidOrigin(request)) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403, headers: NO_STORE_HEADERS },
-      );
-    }
-
-    const apiKey = request.headers.get("x-api-key");
-    if (process.env.API_SECRET_KEY && apiKey !== process.env.API_SECRET_KEY) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401, headers: NO_STORE_HEADERS },
-      );
-    }
-
     let body: unknown;
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON body" },
-        { status: 400, headers: NO_STORE_HEADERS },
-      );
+      return badRequest("Invalid JSON body");
     }
 
     const validationError = validateBody(body);
-    if (validationError) {
-      return NextResponse.json(
-        { error: validationError },
-        { status: 400, headers: NO_STORE_HEADERS },
-      );
-    }
+    if (validationError) return badRequest(validationError);
 
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: "External service error" },
-        { status: response.status },
-      );
+      // Forward the actual error message from Google Script if available
+      const errorBody = await response.json().catch(() => ({}));
+      return badRequest(errorBody?.error || "External service error");
     }
 
     const data = await response.json();
-    return NextResponse.json(data, { headers: NO_STORE_HEADERS });
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    });
   } catch (error) {
-    console.error("GSheet Proxy Error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500, headers: NO_STORE_HEADERS },
-    );
+    return serverError(error);
   }
 }
