@@ -43,7 +43,7 @@ function withNoStore(response: NextResponse) {
 /*  Content-Security-Policy (nonce-based)                             */
 /* ------------------------------------------------------------------ */
 
-function generateCSP(nonce: string): string {
+function generateCSP(): string {
   const isDev = process.env.NODE_ENV === "development";
   const connectSrc = [
     "'self'",
@@ -60,7 +60,7 @@ function generateCSP(nonce: string): string {
   return [
     `default-src 'self'`,
     `worker-src 'self'`,
-    `script-src 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `img-src 'self' data: https://res.cloudinary.com https://avatars.githubusercontent.com`,
     `font-src 'self' data: https://fonts.gstatic.com`,
@@ -78,10 +78,9 @@ function generateCSP(nonce: string): string {
 
 const proxy = (request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
-  const nonce = crypto.randomUUID();
 
   const addSecurityHeaders = (response: NextResponse) => {
-    response.headers.set("Content-Security-Policy", generateCSP(nonce));
+    response.headers.set("Content-Security-Policy", generateCSP());
     return withNoStore(response);
   };
 
