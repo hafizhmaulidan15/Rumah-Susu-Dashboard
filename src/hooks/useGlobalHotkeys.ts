@@ -47,6 +47,7 @@ export const useGlobalHotkeys = ({ isAuthPage }: UseGlobalHotkeysOptions) => {
           break;
         }
 
+        case "b":
         case "\\": {
           if (isAuthPage) return;
           if (isEditableTarget(e.target)) return;

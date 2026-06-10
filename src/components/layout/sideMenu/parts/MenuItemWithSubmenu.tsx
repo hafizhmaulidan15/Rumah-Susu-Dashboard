@@ -24,6 +24,7 @@ import { BREAKPOINTS } from "@/styles/breakpoints";
 interface SubmenuItem {
   title: string;
   path: string;
+  icon?: ReactElement;
   newTab?: boolean;
 }
 
@@ -56,11 +57,6 @@ export const MenuItemWithSubmenu = ({
   const manuallyClosed = useRef(false);
   const prevPathnameRef = useRef(currentPathname);
 
-  /**
-   * Syncs active submenu highlight and auto-expands the group
-   * when the current route matches a submenu item (trailing-slash agnostic).
-   * Respects manual close - only auto-expands on route change.
-   */
   useEffect(() => {
     const pathnameChanged = prevPathnameRef.current !== currentPathname;
     prevPathnameRef.current = currentPathname;
@@ -73,7 +69,6 @@ export const MenuItemWithSubmenu = ({
       ? currentPathname.slice(0, -1)
       : currentPathname;
 
-    /** Check if any submenu item is active */
     const activeItem = submenuItems.find((item) => {
       const normalizedPath = item.path.endsWith("/")
         ? item.path.slice(0, -1)
@@ -91,10 +86,6 @@ export const MenuItemWithSubmenu = ({
     }
   }, [currentPathname, submenuItems]);
 
-  /**
-   * Dynamically sizes the vertical connector line to end at the center
-   * of the last submenu item. Recalculates on resize.
-   */
   useEffect(() => {
     const updateLineHeight = () => {
       if (!verticalLineRef.current) return;
@@ -134,7 +125,6 @@ export const MenuItemWithSubmenu = ({
 
   const isCollapsed = !isSideMenuOpen && isDesktop;
 
-  /** Closes the hover dropdown when sidebar exits collapsed mode. */
   useEffect(() => {
     if (!isCollapsed) setIsDropdownOpen(false);
   }, [isCollapsed]);
@@ -146,10 +136,6 @@ export const MenuItemWithSubmenu = ({
     }
   }, [isCollapsed]);
 
-  /**
-   * Keyboard navigation for submenu toggle and traversal. Enter/Space toggles,
-   * arrows move focus, Escape closes. setTimeout defers focus until React commits.
-   */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (isCollapsed) return;
@@ -196,12 +182,12 @@ export const MenuItemWithSubmenu = ({
 
   const showTooltip = isCollapsed && hasEnteredSinceCollapse && !isDropdownOpen;
 
-  const sharedClassName = `flex relative rounded-md items-center py-2 1xl:py-[0.55rem] 3xl:py-[0.65rem] mb-px 1xl:mb-1 3xl:mb-[0.3125rem] cursor-pointer transition-[background-color,border-color,padding,margin] duration-200 ease-in-out ${
+  const sharedClassName = `flex relative rounded-md items-center py-2 1xl:py-[0.55rem] 3xl:py-[0.65rem] mb-px 1xl:mb-1 3xl:mb-[0.3125rem] cursor-pointer transition-all duration-200 ease-in-out ${
     isCollapsed ? "mx-3 pl-[0.65rem]" : "w-full pl-4 pr-2"
   } ${
     isAnySubmenuActive
-      ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover border-l-2 border-transparent"
-      : "bg-navItemBg hover:bg-navItemBgHover border-l-2 border-transparent"
+      ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover"
+      : "bg-navItemBg hover:bg-navItemBgHover"
   }`;
 
   const iconContent = (
@@ -226,6 +212,9 @@ export const MenuItemWithSubmenu = ({
       aria-expanded={!isCollapsed ? isExpanded : undefined}
       className={`${sharedClassName} focus-visible:outline-offset-[-2px]`}
     >
+      {isAnySubmenuActive && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-to-b from-mainColor to-mainColor/60" />
+      )}
       {iconContent}
       <div
         className={`text-xs xl:text-xs 3xl:text-sm font-medium tracking-wide whitespace-nowrap overflow-hidden transition-[width,opacity] duration-200 ${
@@ -307,8 +296,13 @@ export const MenuItemWithSubmenu = ({
                       }}
                       target={item.newTab ? "_blank" : undefined}
                       onClick={handleMenuItemClick}
-                      className={`w-full ${isItemActive ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover focus:bg-navItemActiveBgHover text-navItemTextActive focus:text-navItemTextActive" : ""}`}
+                      className={`flex items-center gap-2 w-full ${isItemActive ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover focus:bg-navItemActiveBgHover text-navItemTextActive focus:text-navItemTextActive" : ""}`}
                     >
+                      {item.icon && (
+                        <span className="w-4 h-4 stroke-grayIcon fill-grayIcon text-grayIcon flex-shrink-0">
+                          {item.icon}
+                        </span>
+                      )}
                       {item.title}
                     </Link>
                   </DropdownMenuItem>
@@ -363,12 +357,20 @@ export const MenuItemWithSubmenu = ({
                     <div className="absolute left-[calc(1.6rem+2px)] top-1/2 w-3 h-0.5 bg-submenuTreeLine"></div>
                     <div
                       onClick={handleMenuItemClick}
-                      className={`flex rounded-md items-center py-2 1xl:py-[0.55rem] 3xl:py-[0.5rem] pl-[3.2rem] w-full pr-2 transition ${
+                      className={`flex rounded-md items-center gap-2 py-2 1xl:py-[0.55rem] 3xl:py-[0.5rem] pl-[3.2rem] w-full pr-2 transition-all duration-200 relative ${
                         isActive
                           ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover"
                           : "bg-navItemBg hover:bg-navItemBgHover"
                       }`}
                     >
+                      {isActive && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-gradient-to-b from-mainColor to-mainColor/60" />
+                      )}
+                      {item.icon && (
+                        <span className="w-4 h-4 flex-shrink-0 stroke-grayIcon fill-grayIcon text-grayIcon">
+                          {item.icon}
+                        </span>
+                      )}
                       <div
                         className={`text-xs xl:text-xs 3xl:text-sm font-medium tracking-wide whitespace-nowrap ${
                           isActive

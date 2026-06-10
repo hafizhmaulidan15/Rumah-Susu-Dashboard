@@ -1,3 +1,5 @@
+import { Box, CupSoda, ScrollText } from "lucide-react";
+
 import {
   CupIcon,
   DropletIcon,
@@ -31,16 +33,19 @@ export const menuConfig: MenuConfigEntry[] = [
     submenuItems: [
       {
         titleKey: "susuCup",
+        Icon: CupSoda,
         path: "/susu-cup",
         sections: [{ id: "susuCup", titleKey: "susuCup" }],
       },
       {
         titleKey: "cup130ml",
+        Icon: CupSoda,
         path: "/cup-130ml",
         sections: [{ id: "cup130ml", titleKey: "cup130ml" }],
       },
       {
         titleKey: "cup175ml",
+        Icon: CupSoda,
         path: "/cup-175ml",
         sections: [{ id: "cup175ml", titleKey: "cup175ml" }],
       },
@@ -53,21 +58,25 @@ export const menuConfig: MenuConfigEntry[] = [
     submenuItems: [
       {
         titleKey: "plastikLogo2Line",
+        Icon: ScrollText,
         path: "/plastik-logo-2line",
         sections: [{ id: "plastikLogo2Line", titleKey: "plastikLogo2Line" }],
       },
       {
         titleKey: "plastikLogo4Line",
+        Icon: ScrollText,
         path: "/plastik-logo-4line",
         sections: [{ id: "plastikLogo4Line", titleKey: "plastikLogo4Line" }],
       },
       {
         titleKey: "plastikRollPolos",
+        Icon: ScrollText,
         path: "/plastik-roll-polos",
         sections: [{ id: "plastikRollPolos", titleKey: "plastikRollPolos" }],
       },
       {
         titleKey: "plastikRollLogo",
+        Icon: ScrollText,
         path: "/plastik-roll-logo",
         sections: [{ id: "plastikRollLogo", titleKey: "plastikRollLogo" }],
       },
@@ -80,11 +89,13 @@ export const menuConfig: MenuConfigEntry[] = [
     submenuItems: [
       {
         titleKey: "stockBoxTasik",
+        Icon: Box,
         path: "/stock-box-tasik",
         sections: [{ id: "stockBoxTasik", titleKey: "stockBoxTasik" }],
       },
       {
         titleKey: "stockTrayTasik",
+        Icon: Box,
         path: "/stock-tray-tasik",
         sections: [{ id: "stockTrayTasik", titleKey: "stockTrayTasik" }],
       },

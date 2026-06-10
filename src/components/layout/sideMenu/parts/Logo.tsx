@@ -20,19 +20,19 @@ export const Logo = () => {
       aria-label="Rumah Susu Indonesia - home"
       className="flex items-center text-2xl xl:text-xl 1xl:text-[1.3rem] 3xl:text-[1.4rem] font-medium"
     >
-      <div className="menuItemLogo text-logoBg flex-shrink-0 transition-all duration-200">
+      <div className="menuItemLogo text-logoBg flex-shrink-0 transition-all duration-300">
         <LogoIcon />
       </div>
 
       <div
-        className={`flex whitespace-nowrap overflow-hidden transition-all duration-200 ease-in-out ${
-          isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+        className={`flex whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${
+          isCollapsed
+            ? "w-0 opacity-0"
+            : "w-auto opacity-100 ml-[0.7rem] xl:ml-[0.55rem]"
         }`}
         style={{ fontFamily: "var(--font-outfit)" }}
       >
-        <div className="ml-[0.7rem] xl:ml-[0.55rem] text-logoBasicText mr-px tracking-wider">
-          RSI
-        </div>
+        <span className="text-logoBasicText mr-px tracking-wider">RSI</span>
       </div>
     </Link>
   );

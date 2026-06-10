@@ -33,7 +33,6 @@ export const MenuItem = ({ title, icon, path }: MenuItemProps) => {
   };
 
   useEffect(() => {
-    /** Handling active path is inside useEffect because it won't work if prerendered as static HTML (SSG) */
     const normalizedPathname = currentPathname?.endsWith("/")
       ? currentPathname.slice(0, -1)
       : currentPathname;
@@ -49,7 +48,6 @@ export const MenuItem = ({ title, icon, path }: MenuItemProps) => {
     }
   }, [isCollapsed]);
 
-  /** First render check needed to prevent hydration mismatch errors */
   const isFirstRender = useIsFirstRender();
   if (isFirstRender) return null;
 
@@ -76,14 +74,17 @@ export const MenuItem = ({ title, icon, path }: MenuItemProps) => {
         >
           <div
             onClick={handleMenuItemClick}
-            className={`flex relative rounded-md items-center py-2 1xl:py-[0.55rem] 3xl:py-[0.65rem] mb-px 1xl:mb-1 3xl:mb-[0.3125rem] transition-[background-color,border-color,padding] duration-200 ease-in-out ${
+            className={`flex relative rounded-md items-center py-2 1xl:py-[0.55rem] 3xl:py-[0.65rem] mb-px 1xl:mb-1 3xl:mb-[0.3125rem] transition-all duration-200 ease-in-out ${
               isCollapsed ? "pl-[0.65rem]" : "pl-4 pr-2"
             } ${
               isActive
-                ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover border-l-2 border-transparent"
-                : "bg-navItemBg hover:bg-navItemBgHover border-l-2 border-transparent"
+                ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover"
+                : "bg-navItemBg hover:bg-navItemBgHover"
             }`}
           >
+            {isActive && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-to-b from-mainColor to-mainColor/60" />
+            )}
             <div
               className={`menuItemIcon ${isCollapsed ? "" : "pr-3"} ${
                 isActive

@@ -21,6 +21,7 @@ export type MenuConfigEntry =
       submenuItems: {
         titleKey: string;
         path: string;
+        Icon?: ComponentType;
         newTab?: boolean;
         sections?: SearchSection[];
       }[];
