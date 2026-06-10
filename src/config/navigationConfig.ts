@@ -1,3 +1,5 @@
+import { Bot } from "lucide-react";
+
 import {
   CupIcon,
   DropletIcon,
@@ -97,5 +99,13 @@ export const menuConfig: MenuConfigEntry[] = [
     Icon: ShoppingCartIcon,
     path: "/purchase-order",
     sections: [{ id: "purchaseOrder", titleKey: "purchaseOrder" }],
+  },
+  { type: "category", titleKey: "tools" },
+  {
+    type: "item",
+    titleKey: "aiAssistant",
+    Icon: Bot,
+    path: "/ai",
+    sections: [{ id: "aiAssistant", titleKey: "aiAssistant" }],
   },
 ];

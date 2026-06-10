@@ -222,7 +222,9 @@
     "error404": "404 Tidak Ditemukan",
     "error500": "500 Kesalahan Server",
     "management": "Manajemen",
-    "purchaseOrder": "Purchase Order"
+    "purchaseOrder": "Purchase Order",
+    "tools": "Narzędzia",
+    "aiAssistant": "Asystent AI"
   },
   "navbar": {
     "auth": "Autoryzacja",
