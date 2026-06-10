@@ -31,6 +31,11 @@ const TIPE_OPTIONS = [
   { value: "keluar", label: "🚚 Keluar (Out)", dir: "out" },
 ];
 
+interface FieldErrors {
+  Tgl?: string;
+  Jumlah?: string;
+}
+
 export const AddDialog = ({
   open,
   onOpenChange,
@@ -50,10 +55,12 @@ export const AddDialog = ({
     "No. SJ": "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setTipe("masuk");
+    setSubmitted(false);
     setFormData({
       Tgl: new Date().toISOString().slice(0, 16),
       Jumlah: "",
@@ -63,12 +70,10 @@ export const AddDialog = ({
     });
   }, [open]);
 
-  // Auto-calculate projected stock
   const jumlah = Number(formData.Jumlah) || 0;
   const projectedStock =
     tipe === "masuk" ? currentStock + jumlah : currentStock - jumlah;
 
-  // Reset jumlah when type changes
   useEffect(() => {
     setFormData((prev) => ({ ...prev, Jumlah: "" }));
   }, [tipe]);
@@ -77,7 +82,18 @@ export const AddDialog = ({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  const validate = (): FieldErrors => {
+    const errors: FieldErrors = {};
+    if (!formData.Tgl) errors.Tgl = "Tanggal harus diisi";
+    if (jumlah <= 0) errors.Jumlah = "Jumlah harus lebih dari 0";
+    return errors;
+  };
+
   const handleSubmit = async () => {
+    setSubmitted(true);
+    const errors = validate();
+    if (Object.keys(errors).length > 0) return;
+
     setIsSubmitting(true);
     try {
       let apiKey = getAdminKey();
@@ -131,6 +147,7 @@ export const AddDialog = ({
         "No. SJ": "",
       });
       setTipe("masuk");
+      setSubmitted(false);
       invalidateRelatedCaches(sheetKey);
       toast.success("Data berhasil ditambahkan");
       onSuccess();
@@ -143,8 +160,8 @@ export const AddDialog = ({
     }
   };
 
-  const isValid = !!formData.Tgl && jumlah > 0;
-  const isNegativeStock = projectedStock < 0;
+  const errors = submitted ? validate() : {};
+  const hasErrors = Object.keys(errors).length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,7 +172,7 @@ export const AddDialog = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
-          {/* Tipe Transaksi dropdown */}
+          {/* Tipe Transaksi */}
           <div className="flex flex-col gap-2">
             <Label className="text-primaryText font-semibold">
               Tipe Transaksi
@@ -166,7 +183,7 @@ export const AddDialog = ({
                   key={opt.value}
                   type="button"
                   onClick={() => setTipe(opt.value as "masuk" | "keluar")}
-                  className={`px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
+                  className={`min-h-[44px] px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
                     tipe === opt.value
                       ? opt.value === "masuk"
                         ? "border-green-500 bg-green-500/10 text-green-600 dark:text-green-400"
@@ -183,20 +200,26 @@ export const AddDialog = ({
           {/* Tanggal */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="add-tgl" className="text-primaryText">
-              Tanggal
+              Tanggal <span className="text-red-500">*</span>
             </Label>
             <Input
               id="add-tgl"
               type="datetime-local"
               value={formData.Tgl}
               onChange={(e) => handleChange("Tgl", e.target.value)}
+              className={
+                errors.Tgl ? "border-red-500 focus-visible:ring-red-500/30" : ""
+              }
             />
+            {errors.Tgl && (
+              <p className="text-xs text-red-500 font-medium">{errors.Tgl}</p>
+            )}
           </div>
 
           {/* Jumlah */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="add-jumlah" className="text-primaryText">
-              Jumlah{" "}
+              Jumlah <span className="text-red-500">*</span>
               <span
                 className={`text-xs font-bold ml-1 ${tipe === "masuk" ? "text-green-500" : "text-red-500"}`}
               >
@@ -210,14 +233,25 @@ export const AddDialog = ({
               value={formData.Jumlah}
               onChange={(e) => handleChange("Jumlah", e.target.value)}
               placeholder="0"
-              className={jumlah > 0 ? "border-mainColor/50" : ""}
+              className={
+                errors.Jumlah
+                  ? "border-red-500 focus-visible:ring-red-500/30"
+                  : jumlah > 0
+                    ? "border-mainColor/50"
+                    : ""
+              }
             />
+            {errors.Jumlah && (
+              <p className="text-xs text-red-500 font-medium">
+                {errors.Jumlah}
+              </p>
+            )}
           </div>
 
           {/* Stock Preview */}
           <div
             className={`rounded-xl px-4 py-3 flex items-center justify-between border-2 transition-all ${
-              isNegativeStock
+              projectedStock < 0
                 ? "border-red-500/50 bg-red-500/5"
                 : "border-mainColor/30 bg-mainColor/5"
             }`}
@@ -237,14 +271,14 @@ export const AddDialog = ({
                 Stock Setelah
               </p>
               <p
-                className={`text-lg font-black ${isNegativeStock ? "text-red-500" : "text-mainColor"}`}
+                className={`text-lg font-black ${projectedStock < 0 ? "text-red-500" : "text-mainColor"}`}
               >
                 {projectedStock.toLocaleString("id-ID")}{" "}
                 <span className="text-xs font-normal">{displayUnit}</span>
               </p>
             </div>
           </div>
-          {isNegativeStock && (
+          {projectedStock < 0 && (
             <p className="text-xs text-red-500 font-medium -mt-2">
               ⚠️ Stock akan minus! Pastikan jumlah keluar tidak melebihi stock
               saat ini.
@@ -295,13 +329,17 @@ export const AddDialog = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="min-h-[44px]"
+          >
             Batal
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !isValid}
-            className="bg-mainColor hover:bg-mainColor/90 text-black"
+            disabled={isSubmitting}
+            className="bg-mainColor hover:bg-mainColor/90 text-black min-h-[44px]"
           >
             {isSubmitting ? "Menyimpan..." : "Simpan"}
           </Button>

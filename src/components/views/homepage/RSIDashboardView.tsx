@@ -2,6 +2,8 @@
 
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   Box,
   ClipboardList,
   Clock,
@@ -9,6 +11,7 @@ import {
   Layers,
   LayoutDashboard,
   Milk,
+  Minus,
   PackageSearch,
   PlusCircle,
   RefreshCcw,
@@ -90,7 +93,6 @@ const sheetToUrl: Record<string, string> = {
   "Stock Tray Tasik": "/stock-tray-tasik",
 };
 
-/** Per-item low-stock limits (liter/pcs) — avoids false "Critical" on high-volume SKUs. */
 const LOW_STOCK_THRESHOLDS: Record<string, number> = {
   susu: 500,
   "susu cup": 5_000,
@@ -104,9 +106,35 @@ const LOW_STOCK_THRESHOLDS: Record<string, number> = {
   "Stock Tray Tasik": 10,
 };
 
-function isLowStock(key: string, stock: number): boolean {
+function getStockHealth(key: string, stock: number) {
   const threshold = LOW_STOCK_THRESHOLDS[key] ?? 1000;
-  return stock < threshold;
+  const ratio = stock / threshold;
+  if (ratio >= 1)
+    return { level: "high" as const, ratio: Math.min(ratio / 2, 1) };
+  if (ratio >= 0.5) return { level: "medium" as const, ratio };
+  return { level: "low" as const, ratio };
+}
+
+function getBarColor(level: "high" | "medium" | "low") {
+  switch (level) {
+    case "high":
+      return "from-emerald-500 to-emerald-400";
+    case "medium":
+      return "from-amber-500 to-amber-400";
+    case "low":
+      return "from-red-500 to-red-400";
+  }
+}
+
+function getTrendIcon(level: "high" | "medium" | "low") {
+  switch (level) {
+    case "high":
+      return { icon: ArrowUp, color: "text-emerald-500" };
+    case "medium":
+      return { icon: Minus, color: "text-amber-500" };
+    case "low":
+      return { icon: ArrowDown, color: "text-red-500" };
+  }
 }
 
 export const RSIDashboardView = () => {
@@ -140,11 +168,11 @@ export const RSIDashboardView = () => {
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
-  // Data processing with safe Number conversion
   const allStockItems = useMemo(() => {
     return SHEETS.filter((s) => s.key !== "summary").map((sheet) => {
       const stock = Number(stockMap[sheet.key]) || 0;
-      return { ...sheet, stock, isLow: isLowStock(sheet.key, stock) };
+      const health = getStockHealth(sheet.key, stock);
+      return { ...sheet, stock, health };
     });
   }, [stockMap]);
 
@@ -169,7 +197,7 @@ export const RSIDashboardView = () => {
   const lowStockItems = useMemo(() => {
     if (showStocksPending) return [];
     return allStockItems.filter(
-      (item) => item.isLow && item.key !== "susu cup",
+      (item) => item.health.level === "low" && item.key !== "susu cup",
     );
   }, [allStockItems, showStocksPending]);
 
@@ -181,7 +209,7 @@ export const RSIDashboardView = () => {
   }, [stockMap]);
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
+    <div className="max-w-[1400px] mx-auto space-y-5 pb-12">
       {isStocksError && Object.keys(stockMap).length === 0 && (
         <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400">
           Gagal memuat data dari Google Sheets. Coba Refresh atau periksa
@@ -189,19 +217,19 @@ export const RSIDashboardView = () => {
         </div>
       )}
 
-      {/* HEADER: Dynamic & Professional */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-primaryBg p-6 rounded-3xl border border-mainBorder shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="bg-mainColor p-3 rounded-2xl shadow-lg shadow-mainColor/20">
-            <LayoutDashboard className="w-6 h-6 text-white" />
+      {/* HEADER */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-primaryBg p-5 rounded-2xl border border-mainBorder shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="bg-mainColor p-2.5 rounded-xl shadow-lg shadow-mainColor/20">
+            <LayoutDashboard className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
+            <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
               Rumah Susu Indonesia - Warehouse Tasik
             </h1>
-            <div className="flex items-center gap-3 text-[13px] font-semibold text-zinc-400 mt-0.5">
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-mainColor" />{" "}
+            <div className="flex items-center gap-2 text-[12px] font-semibold text-zinc-400 mt-0.5">
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-mainColor" />{" "}
                 {currentTime
                   ? format.dateTime(currentTime, {
                       weekday: "long",
@@ -210,24 +238,24 @@ export const RSIDashboardView = () => {
                     })
                   : "..."}
               </span>
-              <span className="w-1 h-1 rounded-full bg-zinc-300"></span>
-              <span className="text-emerald-500 flex items-center gap-1.5 font-bold">
-                <ShieldCheck className="w-3.5 h-3.5" /> System Active
+              <span className="w-1 h-1 rounded-full bg-zinc-300" />
+              <span className="text-emerald-500 flex items-center gap-1 font-bold">
+                <ShieldCheck className="w-3 h-3" /> System Active
               </span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <div className="relative flex-1 lg:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
             <input
               type="text"
               placeholder="Search inventory..."
               aria-label="Search inventory"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-mainColor/10 transition-all"
+              className="w-full pl-9 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-mainColor/10 transition-all"
             />
           </div>
           <Button
@@ -236,51 +264,52 @@ export const RSIDashboardView = () => {
             aria-label="Refresh stock data"
             onClick={handleRefresh}
             disabled={isStocksLoading || isRefreshing}
-            className="rounded-2xl h-[46px] w-[46px] border-zinc-100 dark:border-zinc-800"
+            className="rounded-xl h-[38px] w-[38px] border-zinc-100 dark:border-zinc-800"
           >
             <RefreshCcw
-              className={`w-4 h-4 text-zinc-500 ${isRefreshing ? "animate-spin" : ""}`}
+              className={`w-3.5 h-3.5 text-zinc-500 ${isRefreshing ? "animate-spin" : ""}`}
             />
           </Button>
         </div>
       </div>
 
-      {/* KPI GRID: Balanced & High Impact */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="bg-zinc-900 border-none text-white shadow-xl relative overflow-hidden group">
-          <CardContent className="p-6 relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
+          <CardContent className="p-5 relative z-10">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
               Total Warehouse Stock
             </p>
-            <h2 className="text-4xl font-black tabular-nums">
+            <h2 className="text-3xl font-bold tabular-nums">
               {showStocksPending ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full border-2 border-zinc-600 border-t-mainColor animate-spin"></div>
-                  <span className="text-xl">Memuat...</span>
+                  <div className="w-6 h-6 rounded-full border-2 border-zinc-600 border-t-mainColor animate-spin" />
+                  <span className="text-sm">Memuat...</span>
                 </div>
               ) : (
                 format.number(totalStockValue)
               )}
             </h2>
-            <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-mainColor">
-              <Zap className="w-3 h-3 fill-current" /> Live from Google Sheets
+            <div className="mt-3 flex items-center gap-1.5 text-[10px] font-semibold text-mainColor">
+              <Zap className="w-2.5 h-2.5 fill-current" /> Live from Google
+              Sheets
             </div>
           </CardContent>
-          <PackageSearch className="absolute -right-6 -bottom-6 w-32 h-32 text-white/5 group-hover:scale-110 transition-transform duration-700" />
+          <PackageSearch className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 group-hover:scale-110 transition-transform duration-500" />
         </Card>
 
         <Card className="bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
-          <CardContent className="p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
+          <CardContent className="p-5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
               Critical Alerts
             </p>
             <h2
-              className={`text-4xl font-black tabular-nums ${showStocksPending ? "text-zinc-300" : lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
+              className={`text-3xl font-bold tabular-nums ${showStocksPending ? "text-zinc-300" : lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
             >
               {showStocksPending ? "..." : lowStockItems.length}
             </h2>
             <div
-              className={`mt-4 inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[10px] font-bold ${lowStockItems.length > 0 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}
+              className={`mt-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold ${lowStockItems.length > 0 ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}
             >
               {showStocksPending
                 ? "Loading..."
@@ -290,19 +319,19 @@ export const RSIDashboardView = () => {
             </div>
           </CardContent>
           <AlertTriangle
-            className={`absolute -right-4 -bottom-4 w-24 h-24 opacity-5 ${lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
+            className={`absolute -right-3 -bottom-3 w-20 h-20 opacity-5 ${lowStockItems.length > 0 ? "text-red-500" : "text-emerald-500"}`}
           />
         </Card>
 
         <Card className="bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 shadow-sm">
-          <CardContent className="p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
-              PO Aktif (Tampilan Cup)
+          <CardContent className="p-5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+              PO Aktif (Cup)
             </p>
-            <h2 className="text-4xl font-black text-zinc-900 dark:text-white tabular-nums">
+            <h2 className="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums">
               {poCount}
             </h2>
-            <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-zinc-400">
+            <div className="mt-3 flex items-center gap-1.5 text-[10px] font-semibold text-zinc-400">
               <ClipboardList className="w-3 h-3" /> Sesi tab (refresh OK)
             </div>
           </CardContent>
@@ -310,25 +339,24 @@ export const RSIDashboardView = () => {
 
         <Link
           href="/purchase-order"
-          className="bg-mainColor hover:bg-mainColor/90 p-1 rounded-3xl shadow-xl shadow-mainColor/20 group transition-all"
+          className="bg-mainColor hover:bg-mainColor/90 p-1 rounded-2xl shadow-lg shadow-mainColor/20 group transition-all"
         >
-          <div className="h-full w-full bg-white/10 rounded-[22px] flex flex-col items-center justify-center gap-2 text-white text-center p-4">
-            <div className="bg-white/20 p-3 rounded-2xl group-hover:scale-110 transition-transform">
-              <PlusCircle className="w-6 h-6 text-white" />
+          <div className="h-full w-full bg-white/10 rounded-[18px] flex flex-col items-center justify-center gap-1.5 text-white text-center p-4">
+            <div className="bg-white/20 p-2 rounded-xl group-hover:scale-110 transition-transform">
+              <PlusCircle className="w-5 h-5 text-white" />
             </div>
-            <span className="font-black text-lg tracking-tight">Create PO</span>
+            <span className="font-bold text-sm tracking-tight">Create PO</span>
           </div>
         </Link>
       </div>
 
-      {/* MAIN SECTION: Category Masonry & Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        {/* Left: Product Categories (3 columns on LG) */}
-        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* MAIN SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
+        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-5">
           {Object.entries(groupedData).length === 0 && searchQuery ? (
-            <div className="col-span-full text-center py-16 text-zinc-400">
-              <PackageSearch className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p className="font-semibold">
+            <div className="col-span-full text-center py-12 text-zinc-400">
+              <PackageSearch className="w-10 h-10 mx-auto mb-2 opacity-40" />
+              <p className="font-semibold text-sm">
                 {`Tidak ada hasil untuk "${searchQuery}"`}
               </p>
             </div>
@@ -342,62 +370,75 @@ export const RSIDashboardView = () => {
                   className="overflow-hidden border-zinc-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md"
                 >
                   <div
-                    className={`px-6 py-5 border-b border-zinc-50 dark:border-zinc-800 flex items-center justify-between ${style.bg}`}
+                    className={`px-5 py-4 border-b border-zinc-50 dark:border-zinc-800 flex items-center justify-between ${style.bg}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white dark:bg-zinc-950 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-800">
+                      <div className="p-1.5 bg-white dark:bg-zinc-950 rounded-lg shadow-sm border border-zinc-100 dark:border-zinc-800">
                         {categoryIcons[category]}
                       </div>
-                      <h3 className="font-black text-zinc-900 dark:text-white text-base tracking-tight uppercase">
+                      <h3 className="font-bold text-zinc-900 dark:text-white text-sm tracking-tight uppercase">
                         {category}
                       </h3>
                     </div>
-                    <span className="text-[10px] font-black bg-white dark:bg-white/10 px-3 py-1 rounded-full text-zinc-500 shadow-sm">
+                    <span className="text-[10px] font-semibold bg-white dark:bg-white/10 px-2.5 py-1 rounded-full text-zinc-500 shadow-sm">
                       {items.length} Units
                     </span>
                   </div>
                   <div className="divide-y divide-zinc-50 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
-                    {items.map((item) => (
-                      <Link
-                        key={item.key}
-                        href={sheetToUrl[item.key] || "#"}
-                        className="flex flex-col px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-950/40 transition-colors group"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[15px] font-bold text-zinc-700 dark:text-zinc-300 group-hover:text-mainColor transition-colors">
-                            {item.label}
-                          </span>
-                          <div className="text-right flex flex-col items-end">
+                    {items.map((item) => {
+                      const TrendIcon = getTrendIcon(item.health.level).icon;
+                      const trendColor = getTrendIcon(item.health.level).color;
+                      const barColor = getBarColor(item.health.level);
+                      return (
+                        <Link
+                          key={item.key}
+                          href={sheetToUrl[item.key] || "#"}
+                          className="flex flex-col px-5 py-3.5 hover:bg-zinc-50 dark:hover:bg-zinc-950/40 transition-colors group"
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 group-hover:text-mainColor transition-colors">
+                              {item.label}
+                            </span>
+                            <div className="text-right flex items-center gap-2">
+                              <TrendIcon
+                                className={`w-3.5 h-3.5 ${trendColor}`}
+                              />
+                              <div className="flex flex-col items-end">
+                                <span
+                                  className={`text-sm font-bold tabular-nums ${item.health.level === "low" ? "text-red-500" : "text-zinc-900 dark:text-white"}`}
+                                >
+                                  {showStocksPending
+                                    ? "---"
+                                    : format.number(item.stock)}
+                                </span>
+                                <span className="text-[8px] font-semibold text-zinc-400 uppercase tracking-widest">
+                                  {item.unit}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-1.5 flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-700`}
+                                style={{
+                                  width: `${Math.min(item.health.ratio * 100, 100)}%`,
+                                }}
+                              />
+                            </div>
                             <span
-                              className={`text-sm font-black tabular-nums ${item.isLow ? "text-red-500" : "text-zinc-900 dark:text-white"}`}
+                              className={`text-[8px] font-bold uppercase tracking-tighter ${item.health.level === "low" ? "text-red-500" : "text-zinc-400"}`}
                             >
-                              {showStocksPending
-                                ? "---"
-                                : format.number(item.stock)}
-                            </span>
-                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
-                              {item.unit}
+                              {item.health.level === "high"
+                                ? "Good"
+                                : item.health.level === "medium"
+                                  ? "Fair"
+                                  : "Critical"}
                             </span>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="h-2 flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-transform duration-1000 ${item.isLow ? "bg-red-500" : style.accent}`}
-                              style={{
-                                transform: `scaleX(${Math.min(item.stock / ((LOW_STOCK_THRESHOLDS[item.key] ?? 500) * 10), 1)})`,
-                                transformOrigin: "left",
-                              }}
-                            />
-                          </div>
-                          <span
-                            className={`text-[9px] font-black uppercase tracking-tighter ${item.isLow ? "text-red-500 animate-pulse" : "text-zinc-400"}`}
-                          >
-                            {item.isLow ? "Critical" : "Healthy"}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </Card>
               );
@@ -405,35 +446,35 @@ export const RSIDashboardView = () => {
           )}
         </div>
 
-        {/* Right: Focused Alerts */}
-        <div className="space-y-6 lg:sticky lg:top-6">
-          <Card className="border-none bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xl overflow-hidden">
-            <CardHeader className="p-5 border-b border-white/5 dark:border-zinc-300">
-              <CardTitle className="text-base font-black flex items-center gap-2 uppercase tracking-wider text-white dark:text-zinc-900">
-                <AlertTriangle className="w-5 h-5 text-red-500" /> Stock Alerts
+        {/* Stock Alerts Sidebar */}
+        <div className="space-y-5 lg:sticky lg:top-6">
+          <Card className="border-none bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl overflow-hidden">
+            <CardHeader className="p-4 border-b border-white/5 dark:border-zinc-300">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider text-white dark:text-zinc-900">
+                <AlertTriangle className="w-4 h-4 text-red-500" /> Stock Alerts
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {showStocksPending ? (
-                <p className="p-8 text-center text-sm font-semibold text-white/60 dark:text-zinc-900/60">
+                <p className="p-6 text-center text-xs font-semibold text-white/60 dark:text-zinc-900/60">
                   Memuat data stok...
                 </p>
               ) : lowStockItems.length > 0 ? (
-                <div className="divide-y divide-white/5 dark:divide-zinc-300 max-h-[380px] overflow-y-auto">
+                <div className="divide-y divide-white/5 dark:divide-zinc-300 max-h-[340px] overflow-y-auto">
                   {lowStockItems.map((item) => (
                     <div
                       key={item.key}
-                      className="p-5 flex items-center justify-between group hover:bg-white/5 dark:hover:bg-zinc-100 transition-colors"
+                      className="p-4 flex items-center justify-between group hover:bg-white/5 dark:hover:bg-zinc-100 transition-colors"
                     >
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-bold text-white dark:text-zinc-900">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-semibold text-white dark:text-zinc-900">
                           {item.label}
                         </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-red-500">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-red-500">
                             {format.number(item.stock)}
                           </span>
-                          <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">
+                          <span className="text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">
                             {item.unit} Left
                           </span>
                         </div>
@@ -441,23 +482,23 @@ export const RSIDashboardView = () => {
                       <Link
                         href={sheetToUrl[item.key] || "/purchase-order"}
                         aria-label={`Buat PO untuk ${item.label}`}
-                        className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                        className="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
                       >
-                        <PlusCircle className="w-5 h-5" />
+                        <PlusCircle className="w-4 h-4" />
                       </Link>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-12 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-emerald-500/10 mx-auto flex items-center justify-center">
-                    <ShieldCheck className="w-8 h-8 text-emerald-500" />
+                <div className="p-10 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 mx-auto flex items-center justify-center">
+                    <ShieldCheck className="w-6 h-6 text-emerald-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-white dark:text-zinc-900">
+                    <p className="text-sm font-bold text-white dark:text-zinc-900">
                       All Good!
                     </p>
-                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
+                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
                       No items need restocking.
                     </p>
                   </div>
@@ -466,16 +507,16 @@ export const RSIDashboardView = () => {
             </CardContent>
           </Card>
 
-          <div className="p-6 bg-mainColor/5 rounded-[32px] border border-mainColor/10 space-y-3">
-            <div className="flex items-center gap-2 text-mainColor">
-              <Zap className="w-4 h-4 fill-current" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="p-5 bg-mainColor/5 rounded-2xl border border-mainColor/10 space-y-2.5">
+            <div className="flex items-center gap-1.5 text-mainColor">
+              <Zap className="w-3.5 h-3.5 fill-current" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
                 Quick Note
               </span>
             </div>
-            <p className="text-[12px] text-zinc-500 dark:text-zinc-400 font-semibold leading-relaxed">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-semibold leading-relaxed">
               Inventory levels are synced in real-time from{" "}
-              <span className="text-zinc-900 dark:text-white font-black underline decoration-mainColor/30">
+              <span className="text-zinc-900 dark:text-white font-bold underline decoration-mainColor/30">
                 Google Sheets
               </span>
               . Use search for quick navigation.

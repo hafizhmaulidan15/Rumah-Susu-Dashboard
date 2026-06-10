@@ -11,6 +11,7 @@ import { usePathname } from "@/i18n/navigation";
 import { useChartAnimationStore } from "@/store/chartAnimationStore";
 import { useLayoutStore } from "@/store/layoutStore";
 
+import { BottomNav } from "./bottomNav/BottomNav";
 import { FullScreenLoader, LOADER_DURATION_MS } from "./FullScreenLoader";
 import { Navbar } from "./navbar/Navbar";
 import { SideMenu } from "./sideMenu/SideMenu";
@@ -112,10 +113,11 @@ export const Layout = ({ children }: LayoutProps) => {
         <div
           className={`flex flex-col w-full ${CONTENT_MAX_WIDTH} mx-auto relative`}
         >
-          <div className="w-full flex justify-center max-w-full px-0 md:px-0 xl:pl-3 xl:pr-2 2xl:px-4">
+          <div className="w-full flex justify-center max-w-full px-0 md:px-0 xl:pl-3 xl:pr-2 2xl:px-4 pb-16 xl:pb-0">
             <ActivePOProvider>{children}</ActivePOProvider>
           </div>
         </div>
+        {!isAuthPage && <BottomNav />}
         <div
           className={`block xl:hidden fixed inset-0 bg-mobileOverlayBg z-[1] cursor-pointer overflow-hidden overscroll-contain transition-opacity duration-300 ease-in-out ${
             isMobileMenuOpen
