@@ -223,9 +223,7 @@
     "error404": "404 Not Found",
     "error500": "500 Server Error",
     "management": "Management",
-    "purchaseOrder": "Purchase Order",
-    "tools": "Tools",
-    "aiAssistant": "AI Assistant"
+    "purchaseOrder": "Purchase Order"
   },
   "navbar": {
     "auth": "Auth",
