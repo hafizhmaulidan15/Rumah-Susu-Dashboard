@@ -5,7 +5,6 @@ import { useEffect, useRef } from "react";
 import { useLayoutStore } from "@/store/layoutStore";
 import { BREAKPOINTS } from "@/styles/breakpoints";
 
-import { CONTENT_MAX_WIDTH } from "../Layout";
 import { Logo } from "../sideMenu/parts/Logo";
 import { SideMenuMobile } from "../sideMenu/SideMenuMobile";
 import { useNavbar } from "./hooks/useNavbar";
@@ -64,12 +63,13 @@ export const Navbar = () => {
         style={{ willChange: fixedNavbar ? "auto" : "transform" }}
       >
         <div
-          className={`hidden xl:block xl:w-57.5 1xl:min-w-62.5 3xl:min-w-67.5 h-12 transition-all duration-200 ease-in-out ${
+          className={`hidden xl:block xl:w-57.5 1xl:min-w-62.5 3xl:min-w-67.5 h-12 t-resize ${
             !isSideMenuOpen && "xl:!max-w-12 !w-12 xl:!min-w-18"
           }`}
         ></div>
         <div
-          className={`px-6 xsm:pr-8 md:px-6 md:pr-8 xl:pl-3 xl:pr-2 2xl:px-4 z-40 w-full flex justify-between xl:mx-auto items-center gap-4 xl:gap-7 ${CONTENT_MAX_WIDTH}`}
+          className="px-6 xsm:pr-8 md:px-6 md:pr-8 xl:pl-3 xl:pr-2 2xl:px-4 z-40 w-full flex justify-between items-center gap-4 xl:gap-7"
+          suppressHydrationWarning
         >
           <div className="flex items-center gap-10">
             <div className="flex xsm:pl-2  xl:hidden">

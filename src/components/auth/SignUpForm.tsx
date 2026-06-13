@@ -54,7 +54,7 @@ export const SignUpForm = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center">
+    <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center animate-fade-in">
       <h1 className="text-4xl sm:text-3xl 1xl:text-4xl font-bold mb-12 1xl:mb-16 mt-2 1xl:mt-4 text-primaryText">
         {t("signUp")}
       </h1>
@@ -226,7 +226,7 @@ export const SignUpForm = ({
         {errors.email && showEmailError && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mb-2 md:hidden text-left w-full"
+            className="text-sm text-redBadgeText -mb-2 md:hidden text-left w-full"
           >
             {errors.email.message}
           </p>
@@ -234,7 +234,7 @@ export const SignUpForm = ({
         {errors.password && showPasswordError && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mb-3 md:hidden text-left w-full"
+            className="text-sm text-redBadgeText -mb-3 md:hidden text-left w-full"
           >
             {errors.password.message}
           </p>
@@ -242,7 +242,7 @@ export const SignUpForm = ({
         {errors.confirmPassword && showConfirmPasswordError && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mb-3 md:hidden text-left w-full"
+            className="text-sm text-redBadgeText -mb-3 md:hidden text-left w-full"
           >
             {errors.confirmPassword.message}
           </p>
@@ -250,7 +250,7 @@ export const SignUpForm = ({
         {signUpError && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mb-3 text-left w-full"
+            className="text-sm text-redBadgeText -mb-3 text-left w-full"
           >
             {signUpError}
           </p>

@@ -10,11 +10,14 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { motion } from "framer-motion";
 import {
   Edit,
+  FileDown,
   MapPin,
   Plus,
   Search,
+  SearchX,
   ShoppingCart,
   Trash2,
   X,
@@ -27,6 +30,7 @@ import { ArrowUpIcon } from "@/assets/icons/ArrowUpIcon";
 import { AddDialog } from "@/components/common/dialogs/AddDialog";
 import { DeleteDialog } from "@/components/common/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/common/dialogs/EditDialog";
+import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/common/shadcn/button";
 import { Card, CardContent } from "@/components/common/shadcn/card";
 import {
@@ -41,6 +45,7 @@ import {
 import { isCupPOKey, useActivePO } from "@/context/ActivePOContext";
 import { useSheetData } from "@/lib/data";
 import { getLatestStockFromRows } from "@/lib/googleSheets";
+import { exportToCSV, exportToExcel } from "@/utils/export";
 
 export interface InventoryRow {
   row: number;
@@ -139,7 +144,7 @@ export const RSIInventoryView = ({
         if (!val && val !== 0)
           return <span className="text-secondaryText">-</span>;
         return (
-          <span className="font-medium text-green-500">
+          <span className="font-medium text-greenBadgeText">
             {format.number(Number(val))}
           </span>
         );
@@ -153,7 +158,7 @@ export const RSIInventoryView = ({
         if (!val && val !== 0)
           return <span className="text-secondaryText">-</span>;
         return (
-          <span className="font-medium text-red-500">
+          <span className="font-medium text-redBadgeText">
             {format.number(Number(val))}
           </span>
         );
@@ -217,7 +222,7 @@ export const RSIInventoryView = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 sm:h-8 sm:w-8 hover:text-red-500"
+            className="h-9 w-9 sm:h-8 sm:w-8 hover:text-redBadgeText"
             onClick={() => setDeleteRow(row.original)}
             aria-label="Delete"
           >
@@ -286,9 +291,9 @@ export const RSIInventoryView = ({
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 animate-fade-in">
       {cupPO && cupPO.quantity > 0 && (
-        <Card className="border-mainColor/30 bg-mainColor/5 shadow-sm">
+        <Card className="border-mainColor/30 bg-transparent glass-tinted shadow-sm card-hover">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0">
@@ -341,7 +346,7 @@ export const RSIInventoryView = ({
         </Button>
       </div>
 
-      <Card>
+      <Card className="bg-transparent glass-card border-mainBorder/30 shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 pt-6 pb-4">
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondaryText" />
@@ -351,207 +356,299 @@ export const RSIInventoryView = ({
               aria-label="Cari data"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm bg-primaryBg border border-inputBorder rounded-lg text-primaryText placeholder:text-secondaryText focus:outline-none focus:ring-1 focus:ring-mainColor w-full sm:w-48 md:w-64"
+              className="pl-9 pr-4 py-2.5 text-sm bg-primaryBg border border-inputBorder rounded-lg text-primaryText placeholder:text-secondaryText focus:outline-none focus:ring-1 focus:ring-mainColor w-full sm:w-56 md:w-72"
             />
           </div>
-          <div className="text-xs sm:text-sm text-secondaryText shrink-0">
-            {filteredData.length} data
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportToCSV(filteredData, `${sheetLabel} Inventory`)
+              }
+              className="gap-1.5 text-xs h-8 px-2.5"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportToExcel(filteredData, `${sheetLabel} Inventory`)
+              }
+              className="gap-1.5 text-xs h-8 px-2.5"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Excel
+            </Button>
+            <span className="text-xs sm:text-sm text-secondaryText">
+              {filteredData.length} data
+            </span>
           </div>
         </div>
 
         <CardContent className="px-0">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="flex flex-col items-center gap-3">
-                <div className="animate-spin rounded-full h-10 w-10 border-2 border-mainColor border-t-transparent" />
-                <span className="text-secondaryText text-sm">
-                  Memuat data...
-                </span>
-              </div>
-            </div>
-          ) : isError ? (
-            <div
-              role="alert"
-              className="flex items-center justify-center h-64 px-6"
-            >
-              <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-red-500/10 mx-auto flex items-center justify-center">
-                  <span className="text-red-500 text-xl font-bold">!</span>
+          <phantom-ui
+            loading={isLoading}
+            animation="shimmer"
+            reveal={0.3}
+            background-color="var(--skeletonBg)"
+          >
+            {isLoading ? (
+              <div className="divide-y divide-mainBorder/10">
+                <div className="flex gap-3 sm:gap-6 px-3 sm:px-6 py-3">
+                  <span className="w-8 text-transparent">No</span>
+                  <span className="w-24 text-transparent">Tanggal</span>
+                  <span className="w-16 text-transparent">Masuk</span>
+                  <span className="w-16 text-transparent">Keluar</span>
+                  <span className="w-16 text-transparent">Stock</span>
+                  <span className="w-28 text-transparent">Keterangan</span>
+                  <span className="w-20 text-transparent">Request By</span>
+                  <span className="w-16 text-transparent hidden xl:inline">
+                    No. SJ
+                  </span>
+                  <span className="w-16 text-transparent">Actions</span>
                 </div>
-                <p className="text-red-500 font-semibold text-sm">
-                  Gagal memuat data
-                </p>
-                <p className="text-secondaryText text-xs">
-                  Coba refresh halaman atau periksa koneksi Google Sheets.
-                </p>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-3 sm:gap-6 px-3 sm:px-6 py-3.5"
+                  >
+                    <span className="w-8 text-transparent">{i + 1}</span>
+                    <span className="w-24 text-transparent">01 Jan 2026</span>
+                    <span className="w-16 text-transparent">100</span>
+                    <span className="w-16 text-transparent">50</span>
+                    <span className="w-16 text-transparent">150</span>
+                    <span className="w-28 text-transparent">
+                      Keterangan sample
+                    </span>
+                    <span className="w-20 text-transparent">User Name</span>
+                    <span className="w-16 text-transparent hidden xl:inline">
+                      SJ-001
+                    </span>
+                    <span className="w-16 text-transparent">Edit</span>
+                  </div>
+                ))}
               </div>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="flex items-center justify-center h-64 text-secondaryText">
-              {searchQuery ? "Tidak ada hasil pencarian" : "Tidak ada data"}
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header, index) => {
-                          const colId = header.column.id;
-                          const hideClasses =
-                            colId === "No. SJ"
-                              ? "hidden xl:table-cell"
-                              : colId === "Request By"
-                                ? "hidden lg:table-cell"
-                                : colId === "Keterangan"
-                                  ? "hidden md:table-cell"
-                                  : "";
-                          return (
-                            <th
-                              key={header.id}
-                              scope="col"
-                              className={`text-secondaryText font-medium text-left text-xs sm:text-sm px-2 sm:px-4 py-3 whitespace-nowrap border-t border-b border-inputBorder bg-tableHeaderBg ${
-                                index === 0 ? "border-l" : ""
-                              } ${
-                                index === headerGroup.headers.length - 1
-                                  ? "border-r"
-                                  : ""
-                              } ${
-                                header.column.getCanSort()
-                                  ? "cursor-pointer select-none hover:bg-tableHeaderBgHover"
-                                  : ""
-                              } ${hideClasses}`}
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              <div className="flex items-center">
+            ) : isError ? (
+              <div
+                role="alert"
+                className="flex items-center justify-center h-64 px-6"
+              >
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-redBadgeText/10 mx-auto flex items-center justify-center">
+                    <span className="text-redBadgeText text-xl font-bold">
+                      !
+                    </span>
+                  </div>
+                  <p className="text-redBadgeText font-semibold text-sm">
+                    Gagal memuat data
+                  </p>
+                  <p className="text-secondaryText text-xs">
+                    Coba refresh halaman atau periksa koneksi Google Sheets.
+                  </p>
+                </div>
+              </div>
+            ) : filteredData.length === 0 ? (
+              <EmptyState
+                illustration={searchQuery ? "search" : "data"}
+                icon={
+                  searchQuery ? (
+                    <SearchX className="w-6 h-6" />
+                  ) : (
+                    <Search className="w-6 h-6" />
+                  )
+                }
+                title={
+                  searchQuery ? "Tidak ada hasil pencarian" : "Tidak ada data"
+                }
+                description={
+                  searchQuery
+                    ? "Coba keyword lain atau reset filter"
+                    : "Belum ada data inventory untuk sheet ini"
+                }
+              />
+            ) : (
+              <>
+                <div className="overflow-x-auto max-h-[70vh]">
+                  <table className="w-full sticky-header">
+                    <thead>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map((header, index) => {
+                            const colId = header.column.id;
+                            const hideClasses =
+                              colId === "No. SJ"
+                                ? "hidden xl:table-cell"
+                                : colId === "Request By"
+                                  ? "hidden lg:table-cell"
+                                  : colId === "Keterangan"
+                                    ? "hidden md:table-cell"
+                                    : "";
+                            return (
+                              <th
+                                key={header.id}
+                                scope="col"
+                                className={`text-secondaryText font-medium text-left text-xs sm:text-sm px-3 sm:px-6 py-3 whitespace-nowrap border-t border-b border-mainBorder/40 bg-tableHeaderBg ${
+                                  index === 0 ? "border-l" : ""
+                                } ${
+                                  index === headerGroup.headers.length - 1
+                                    ? "border-r"
+                                    : ""
+                                } ${
+                                  header.column.getCanSort()
+                                    ? "cursor-pointer select-none hover:bg-tableHeaderBgHover"
+                                    : ""
+                                } ${hideClasses}`}
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                <div className="flex items-center">
+                                  {flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext(),
+                                  )}
+                                  <SortingArrow
+                                    isSorted={header.column.getIsSorted()}
+                                  />
+                                </div>
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </thead>
+                    <motion.tbody
+                      key={table.getState().pagination.pageIndex}
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        hidden: {},
+                        visible: { transition: { staggerChildren: 0.035 } },
+                      }}
+                    >
+                      {table.getRowModel().rows.map((row) => (
+                        <motion.tr
+                          key={row.id}
+                          className="hover:bg-tableRowBgHover"
+                          variants={{
+                            hidden: { opacity: 0, y: 10 },
+                            visible: { opacity: 1, y: 0 },
+                          }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                        >
+                          {row.getVisibleCells().map((cell, cellIndex) => {
+                            const colId = cell.column.id;
+                            const hideClasses =
+                              colId === "No. SJ"
+                                ? "hidden xl:table-cell"
+                                : colId === "Request By"
+                                  ? "hidden lg:table-cell"
+                                  : colId === "Keterangan"
+                                    ? "hidden md:table-cell"
+                                    : "";
+                            return (
+                              <td
+                                key={cell.id}
+                                className={`px-3 sm:px-6 py-3 text-primaryText text-xs sm:text-sm border-b border-mainBorder ${
+                                  cellIndex === 0 ? "border-l" : ""
+                                } ${
+                                  cellIndex === row.getVisibleCells().length - 1
+                                    ? "border-r"
+                                    : ""
+                                } ${hideClasses}`}
+                              >
                                 {flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
+                                  cell.column.columnDef.cell,
+                                  cell.getContext(),
                                 )}
-                                <SortingArrow
-                                  isSorted={header.column.getIsSorted()}
-                                />
-                              </div>
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map((row) => (
-                      <tr key={row.id} className="hover:bg-tableRowBgHover">
-                        {row.getVisibleCells().map((cell, cellIndex) => {
-                          const colId = cell.column.id;
-                          const hideClasses =
-                            colId === "No. SJ"
-                              ? "hidden xl:table-cell"
-                              : colId === "Request By"
-                                ? "hidden lg:table-cell"
-                                : colId === "Keterangan"
-                                  ? "hidden md:table-cell"
-                                  : "";
-                          return (
-                            <td
-                              key={cell.id}
-                              className={`px-2 sm:px-4 py-3 text-primaryText text-xs sm:text-sm border-b border-mainBorder ${
-                                cellIndex === 0 ? "border-l" : ""
-                              } ${
-                                cellIndex === row.getVisibleCells().length - 1
-                                  ? "border-r"
-                                  : ""
-                              } ${hideClasses}`}
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext(),
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex items-center justify-between max-sm:flex-col max-sm:items-center max-sm:gap-3 px-4 mt-6">
-                <div className="text-xs sm:text-sm text-secondaryText whitespace-nowrap">
-                  {t("showing")}{" "}
-                  {table.getState().pagination.pageIndex *
-                    table.getState().pagination.pageSize +
-                    1}{" "}
-                  {t("to")}{" "}
-                  {Math.min(
-                    (table.getState().pagination.pageIndex + 1) *
-                      table.getState().pagination.pageSize,
-                    filteredData.length,
-                  )}{" "}
-                  {t("of")} {filteredData.length} {t("results")}
+                              </td>
+                            );
+                          })}
+                        </motion.tr>
+                      ))}
+                    </motion.tbody>
+                  </table>
                 </div>
-                <Pagination className="m-0 justify-end">
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                        label={t("previous")}
-                      />
-                    </PaginationItem>
-                    {Array.from(
-                      { length: table.getPageCount() },
-                      (_, i) => i,
-                    ).map((pageIndex) => {
-                      const currentPage = table.getState().pagination.pageIndex;
-                      const totalPages = table.getPageCount();
-                      const pageWindow =
-                        totalPages <= 5
-                          ? 1
-                          : currentPage <= 1 || currentPage >= totalPages - 2
+
+                <div className="flex items-center justify-between max-sm:flex-col max-sm:items-center max-sm:gap-3 px-4 mt-6">
+                  <div className="text-xs sm:text-sm text-secondaryText whitespace-nowrap">
+                    {t("showing")}{" "}
+                    {table.getState().pagination.pageIndex *
+                      table.getState().pagination.pageSize +
+                      1}{" "}
+                    {t("to")}{" "}
+                    {Math.min(
+                      (table.getState().pagination.pageIndex + 1) *
+                        table.getState().pagination.pageSize,
+                      filteredData.length,
+                    )}{" "}
+                    {t("of")} {filteredData.length} {t("results")}
+                  </div>
+                  <Pagination className="m-0 justify-end">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => table.previousPage()}
+                          disabled={!table.getCanPreviousPage()}
+                          label={t("previous")}
+                        />
+                      </PaginationItem>
+                      {Array.from(
+                        { length: table.getPageCount() },
+                        (_, i) => i,
+                      ).map((pageIndex) => {
+                        const currentPage =
+                          table.getState().pagination.pageIndex;
+                        const totalPages = table.getPageCount();
+                        const pageWindow =
+                          totalPages <= 5
                             ? 1
-                            : 2;
-                      if (
-                        pageIndex === 0 ||
-                        pageIndex === totalPages - 1 ||
-                        (pageIndex >= currentPage - pageWindow &&
-                          pageIndex <= currentPage + pageWindow)
-                      ) {
-                        return (
-                          <PaginationItem key={pageIndex}>
-                            <PaginationLink
-                              onClick={() => table.setPageIndex(pageIndex)}
-                              isActive={pageIndex === currentPage}
-                              className="h-9 w-9 sm:h-8 sm:w-8"
-                            >
-                              {pageIndex + 1}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      } else if (
-                        pageIndex === currentPage - (pageWindow + 1) ||
-                        pageIndex === currentPage + (pageWindow + 1)
-                      ) {
-                        return (
-                          <PaginationItem key={pageIndex}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        );
-                      }
-                      return null;
-                    })}
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                        label={t("next")}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            </>
-          )}
+                            : currentPage <= 1 || currentPage >= totalPages - 2
+                              ? 1
+                              : 2;
+                        if (
+                          pageIndex === 0 ||
+                          pageIndex === totalPages - 1 ||
+                          (pageIndex >= currentPage - pageWindow &&
+                            pageIndex <= currentPage + pageWindow)
+                        ) {
+                          return (
+                            <PaginationItem key={pageIndex}>
+                              <PaginationLink
+                                onClick={() => table.setPageIndex(pageIndex)}
+                                isActive={pageIndex === currentPage}
+                                className="h-9 w-9 sm:h-8 sm:w-8"
+                              >
+                                {pageIndex + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        } else if (
+                          pageIndex === currentPage - (pageWindow + 1) ||
+                          pageIndex === currentPage + (pageWindow + 1)
+                        ) {
+                          return (
+                            <PaginationItem key={pageIndex}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          );
+                        }
+                        return null;
+                      })}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => table.nextPage()}
+                          disabled={!table.getCanNextPage()}
+                          label={t("next")}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              </>
+            )}
+          </phantom-ui>
         </CardContent>
       </Card>
 

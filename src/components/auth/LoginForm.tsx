@@ -54,7 +54,7 @@ export const LoginForm = ({
   const [rememberMe, setRememberMe] = useState(false);
 
   return (
-    <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center">
+    <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center animate-fade-in">
       <h1 className="text-4xl sm:text-3xl 1xl:text-4xl font-bold mb-12 1xl:mb-16 mt-2 1xl:mt-4 text-primaryText">
         {t("signIn")}
       </h1>
@@ -161,7 +161,7 @@ export const LoginForm = ({
         {!authErrorDisplayed && errors.email && showEmailError && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mt-1 md:hidden text-left w-full"
+            className="text-sm text-redBadgeText -mt-1 md:hidden text-left w-full"
           >
             {errors.email.message}
           </p>
@@ -169,7 +169,7 @@ export const LoginForm = ({
         {!authErrorDisplayed && errors.password && showPasswordError && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mt-1 md:hidden text-left w-full"
+            className="text-sm text-redBadgeText -mt-1 md:hidden text-left w-full"
           >
             {errors.password.message}
           </p>
@@ -177,7 +177,7 @@ export const LoginForm = ({
         {authErrorDisplayed && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mt-1 text-left w-full"
+            className="text-sm text-redBadgeText -mt-1 text-left w-full"
           >
             {authErrorDisplayed}
           </p>

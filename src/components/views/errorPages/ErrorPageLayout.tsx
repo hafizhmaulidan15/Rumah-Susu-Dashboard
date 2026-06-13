@@ -30,24 +30,26 @@ export const ErrorPageLayout = ({
       />
       <ThemeButtonAuth />
       <main className="fixed w-dvw h-dvh flex flex-col justify-center items-center top-0 left-0 z-20 -mt-8">
-        <div
-          className="w-16 h-16 mb-6 text-mainColor opacity-80"
-          aria-hidden="true"
-        >
-          {icon}
+        <div className="glass-card px-10 py-12 rounded-2xl flex flex-col items-center border border-mainBorder/30 stagger-children">
+          <div
+            className="w-16 h-16 mb-6 text-mainColor opacity-80"
+            aria-hidden="true"
+          >
+            {icon}
+          </div>
+          <h1 className="text-[7rem] xsm:text-[8rem] font-bold text-primaryText tracking-tight leading-none mb-6">
+            {code}
+          </h1>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-primaryText mb-3">
+            {t(titleKey)}
+          </h2>
+          <p className="text-base text-secondaryText text-center leading-relaxed mb-10 max-w-72 xsm:max-w-sm">
+            {t(descriptionKey)}
+          </p>
+          <Button asChild className="rounded-xl px-6 py-3 h-auto">
+            <Link href="/">{t("backToHomepage")}</Link>
+          </Button>
         </div>
-        <h1 className="text-[7rem] xsm:text-[8rem] font-bold text-primaryText tracking-tight leading-none mb-6">
-          {code}
-        </h1>
-        <h2 className="text-2xl sm:text-3xl font-semibold text-primaryText mb-3">
-          {t(titleKey)}
-        </h2>
-        <p className="text-base text-secondaryText text-center leading-relaxed mb-10 max-w-72 xsm:max-w-sm">
-          {t(descriptionKey)}
-        </p>
-        <Button asChild className="rounded-xl px-6 py-3 h-auto">
-          <Link href="/">{t("backToHomepage")}</Link>
-        </Button>
       </main>
     </>
   );

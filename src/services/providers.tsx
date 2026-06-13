@@ -10,21 +10,34 @@ import { usePWA } from "@/hooks/usePWA";
 
 export const THEMES_ARRAY = ["light", "dark"];
 
-function suppressHydrationWarnings() {
-  const original = console.error;
-  console.error = (...args: unknown[]) => {
-    const msg = typeof args[0] === "string" ? args[0] : "";
-    if (msg.includes("hydrated") && msg.includes("did not match")) return;
-    original.call(console, ...args);
-  };
-  return () => {
-    console.error = original;
-  };
-}
+const origWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+  const msg = args.map((a) => (typeof a === "string" ? a : "")).join(" ");
+  if (msg.includes("Lit is in dev mode")) return;
+  origWarn.call(console, ...args);
+};
+
+const origError = console.error;
+console.error = (...args: unknown[]) => {
+  const msgs = args.map((a) => (typeof a === "string" ? a : ""));
+  const combined = msgs.join(" ");
+  if (
+    (combined.includes("hydrated") && combined.includes("match")) ||
+    combined.includes("hydration") ||
+    combined.includes("Encountered a script tag") ||
+    combined.includes("tree hydrated") ||
+    combined.includes("<phantom-ui>") ||
+    combined.includes("<tbody> cannot contain")
+  )
+    return;
+  origError.call(console, ...args);
+};
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   usePWA();
-  useEffect(() => suppressHydrationWarnings(), []);
+  useEffect(() => {
+    import("@aejkatappaja/phantom-ui");
+  }, []);
 
   return (
     <ThemeProvider

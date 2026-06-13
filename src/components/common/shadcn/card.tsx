@@ -56,7 +56,7 @@ export const Card = ({ children, className, id }: CardProps) => {
       id={id}
       style={{ boxShadow: "var(--cardShadow)" }}
       className={cn(
-        "border border-cardBorder rounded-xl bg-primaryBg relative w-full text-left h-full pt-[1.35rem] pb-6",
+        "border border-cardBorder rounded-xl relative w-full text-left h-full pt-[1.35rem] pb-6",
         className,
       )}
     >

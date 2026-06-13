@@ -91,7 +91,7 @@ export const ForgotPasswordForm = () => {
 
   if (isSubmitted) {
     return (
-      <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center">
+      <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center animate-fade-in">
         <div className="w-16 h-16 1xl:w-20 1xl:h-20 mb-6 1xl:mb-8 mt-2 1xl:mt-4 stroke-mainColor [&>svg]:w-full [&>svg]:h-full">
           <MailIcon />
         </div>
@@ -119,7 +119,7 @@ export const ForgotPasswordForm = () => {
   }
 
   return (
-    <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center">
+    <div className="w-full sm:max-w-84 md:w-78 1xl:w-84 flex flex-col items-center animate-fade-in">
       <h1 className="text-3xl sm:text-2xl 1xl:text-3xl font-bold mb-4 1xl:mb-5 mt-2 sm:mt-6 1xl:mt-8 text-primaryText text-center whitespace-nowrap">
         {t("forgotPasswordTitle")}
       </h1>
@@ -172,7 +172,7 @@ export const ForgotPasswordForm = () => {
         {errors.email && showEmailError && (
           <p
             role="alert"
-            className="text-sm text-red-500 -mt-1 md:hidden text-left w-full"
+            className="text-sm text-redBadgeText -mt-1 md:hidden text-left w-full"
           >
             {errors.email.message}
           </p>

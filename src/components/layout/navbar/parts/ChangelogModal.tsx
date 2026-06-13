@@ -47,9 +47,9 @@ export const ChangelogModal = ({
                 <SpinnerIcon className="contentSpinner" />
               </div>
             ) : error ? (
-              <div className="text-red-500 text-center py-5">{error}</div>
+              <div className="text-redBadgeText text-center py-5">{error}</div>
             ) : (
-              <div className="pb-4 [&_h2]:text-primaryText [&_h2]:text-3xl [&_h2]:mb-4 [&_h3]:text-secondaryText [&_h3]:text-xl [&_h3]:mt-4 [&_h4]:text-secondaryText [&_h4]:mt-4 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:pl-3 [&_li]:text-primaryText [&_p]:mb-4 [&_p]:text-base [&_code]:bg-gray-100 [&_code]:dark:bg-gray-800 [&_code]:px-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:dark:bg-gray-800 [&_pre]:p-2 [&_pre]:rounded [&_pre]:my-2 [&_pre]:font-mono [&_pre]:text-sm [&_pre]:overflow-x-auto [&_hr]:my-4">
+              <div className="pb-4 [&_h2]:text-primaryText [&_h2]:text-3xl [&_h2]:mb-4 [&_h3]:text-secondaryText [&_h3]:text-xl [&_h3]:mt-4 [&_h4]:text-secondaryText [&_h4]:mt-4 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:pl-3 [&_li]:text-primaryText [&_p]:mb-4 [&_p]:text-base [&_code]:bg-mutedBg [&_code]:px-1 [&_code]:rounded [&_pre]:bg-mutedBg [&_pre]:p-2 [&_pre]:rounded [&_pre]:my-2 [&_pre]:font-mono [&_pre]:text-sm [&_pre]:overflow-x-auto [&_hr]:my-4">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {changelogContent}
                 </ReactMarkdown>

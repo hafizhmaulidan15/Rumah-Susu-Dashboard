@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
   CheckCircle2,
   ClipboardList,
@@ -10,6 +11,7 @@ import { useFormatter } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { GradientIcon } from "@/components/common/GradientIcon";
 import { Button } from "@/components/common/shadcn/button";
 import { Card, CardContent } from "@/components/common/shadcn/card";
 import { Input } from "@/components/common/shadcn/input";
@@ -85,11 +87,13 @@ export const PurchaseOrderView = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-primaryText flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-mainColor" />
+            <GradientIcon>
+              <ShoppingCart className="w-5 h-5" />
+            </GradientIcon>
             Purchase Planning
           </h2>
           <p className="text-secondaryText text-sm mt-1">
@@ -117,11 +121,11 @@ export const PurchaseOrderView = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
         {poItems.map((item) => (
           <Card
             key={item.key}
-            className="border-mainBorder shadow-sm overflow-hidden"
+            className="bg-transparent glass-card border-mainBorder/30 shadow-sm overflow-hidden card-hover"
           >
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center justify-between mb-3">
@@ -130,7 +134,7 @@ export const PurchaseOrderView = () => {
                   Stock: {format.number(item.currentStock)} Pcs
                 </p>
               </div>
-              <div className="bg-mainColor/10 rounded-lg px-3 py-3 text-center">
+              <div className="bg-mainColor/15 glass rounded-lg px-3 py-3 text-center">
                 <p className="text-[10px] text-mainColor uppercase font-bold">
                   PO ke Halaman Cup
                 </p>
@@ -143,53 +147,70 @@ export const PurchaseOrderView = () => {
         ))}
       </div>
 
-      <Card className="shadow-sm border-mainBorder overflow-hidden">
-        <div className="px-6 py-4 border-b border-mainBorder bg-primaryBg/50 flex items-center gap-2">
+      <Card className="bg-transparent glass-card border-mainBorder/30 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-mainBorder/30 bg-transparent flex items-center gap-2">
           <ClipboardList className="w-4 h-4 text-mainColor" />
           <h3 className="font-bold text-primaryText">
             Input PO dari Management
           </h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-tableHeaderBg text-secondaryText uppercase text-[10px] font-bold tracking-widest border-b border-mainBorder">
-              <tr>
-                <th className="px-6 py-3">Item</th>
-                <th className="px-6 py-3">Stock Saat Ini</th>
-                <th className="px-6 py-3 bg-mainColor/5">PO dari Management</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-mainBorder">
-              {isLoading ? (
+        {isLoading ? (
+          <div className="px-6 py-4">
+            <phantom-ui
+              loading
+              animation="shimmer"
+              background-color="var(--skeletonBg)"
+            >
+              <div className="space-y-3">
+                <p className="text-transparent h-10">
+                  Item placeholder panjang
+                </p>
+                <p className="text-transparent h-10">Stock: 1,000 Pcs</p>
+                <p className="text-transparent h-10">500</p>
+              </div>
+            </phantom-ui>
+          </div>
+        ) : isError ? (
+          <div className="px-6 py-8 text-center text-secondaryText">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-redBadgeText font-semibold text-sm">
+                Gagal memuat data stok
+              </span>
+              <span className="text-xs">
+                Coba refresh halaman atau periksa koneksi.
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-tableHeaderBg text-secondaryText uppercase text-[10px] font-bold tracking-widest border-b border-mainBorder">
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="px-6 py-8 text-center text-secondaryText italic"
-                  >
-                    Loading...
-                  </td>
+                  <th className="px-6 py-3">Item</th>
+                  <th className="px-6 py-3">Stock Saat Ini</th>
+                  <th className="px-6 py-3 bg-mainColor/5">
+                    PO dari Management
+                  </th>
                 </tr>
-              ) : isError ? (
-                <tr>
-                  <td
-                    colSpan={3}
-                    className="px-6 py-8 text-center text-secondaryText"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-red-500 font-semibold text-sm">
-                        Gagal memuat data stok
-                      </span>
-                      <span className="text-xs">
-                        Coba refresh halaman atau periksa koneksi.
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                poItems.map((item) => (
-                  <tr
+              </thead>
+              <motion.tbody
+                className="divide-y divide-mainBorder"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: { transition: { staggerChildren: 0.04 } },
+                }}
+              >
+                {poItems.map((item) => (
+                  <motion.tr
                     key={item.key}
                     className="hover:bg-primaryBg/50 transition-colors"
+                    variants={{
+                      hidden: { opacity: 0, y: 10 },
+                      visible: { opacity: 1, y: 0 },
+                    }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
                   >
                     <td className="px-6 py-4 font-bold text-primaryText">
                       {item.label}
@@ -206,15 +227,15 @@ export const PurchaseOrderView = () => {
                         onChange={(e) =>
                           handlePoChange(item.key, e.target.value)
                         }
-                        className="h-10 text-base font-bold bg-white dark:bg-primaryBg border-mainColor/30 focus:border-mainColor w-full"
+                        className="h-10 text-base font-bold bg-primaryBg border-mainColor/30 focus:border-mainColor w-full"
                       />
                     </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </motion.tr>
+                ))}
+              </motion.tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );

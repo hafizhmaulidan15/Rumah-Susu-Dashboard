@@ -1,8 +1,8 @@
 import "@/styles/globals.css";
+import "@aejkatappaja/phantom-ui/ssr.css";
 
 import { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 
@@ -36,34 +36,10 @@ export default async function RootLayout({
        */
       suppressHydrationWarning={true}
     >
-      <head>
-        <Script
-          id="hydration-suppress"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(){
-          var a=['fdprocessedid','cz-shortcut-listen'];
-          function r(e){for(var i=0;i<a.length;i++)e.removeAttribute(a[i]);}
-          function s(){try{document.querySelectorAll('*').forEach(r);}catch(e){}}
-          s();
-          (new MutationObserver(function(m){
-            for(var i=0;i<m.length;i++){
-              if(m[i].type==='attributes'){r(m[i].target);}
-              else if(m[i].type==='childList'){
-                for(var j=0;j<m[i].addedNodes.length;j++){
-                  var n=m[i].addedNodes[j];
-                  if(n.nodeType===1){r(n);n.querySelectorAll('*').forEach(r);}
-                }
-              }
-            }
-          })).observe(document.documentElement,{attributes:true,childList:true,subtree:true,attributeFilter:a});
-          if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',s);}
-        })();`,
-          }}
-        />
-      </head>
-
-      <body className={`${outfit.variable} ${openSans.variable}`}>
+      <body
+        className={`${outfit.variable} ${openSans.variable}`}
+        suppressHydrationWarning
+      >
         <NextIntlClientProvider>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

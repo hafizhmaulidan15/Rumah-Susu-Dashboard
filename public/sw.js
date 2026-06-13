@@ -6,7 +6,16 @@ const CACHEABLE = [
   "/manifest.json",
 ];
 
-self.addEventListener("install", () => self.skipWaiting());
+const isDev =
+  self.location.hostname === "localhost" ||
+  self.location.hostname === "127.0.0.1";
+
+if (isDev) {
+  self.addEventListener("install", () => {
+    self.skipWaiting();
+    self.registration.unregister();
+  });
+}
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
@@ -19,6 +28,7 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  if (isDev) return;
   if (e.request.method !== "GET") return;
 
   const url = new URL(e.request.url);

@@ -161,7 +161,6 @@ export const AddDialog = ({
   };
 
   const errors = submitted ? validate() : {};
-  const hasErrors = Object.keys(errors).length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,8 +185,8 @@ export const AddDialog = ({
                   className={`min-h-[44px] px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
                     tipe === opt.value
                       ? opt.value === "masuk"
-                        ? "border-green-500 bg-green-500/10 text-green-600 dark:text-green-400"
-                        : "border-red-500 bg-red-500/10 text-red-600 dark:text-red-400"
+                        ? "border-greenBadgeText bg-greenBadgeText/10 text-greenBadgeText"
+                        : "border-redBadgeText bg-redBadgeText/10 text-redBadgeText"
                       : "border-mainBorder bg-primaryBg text-secondaryText hover:border-mainColor/50"
                   }`}
                 >
@@ -200,7 +199,7 @@ export const AddDialog = ({
           {/* Tanggal */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="add-tgl" className="text-primaryText">
-              Tanggal <span className="text-red-500">*</span>
+              Tanggal <span className="text-redBadgeText">*</span>
             </Label>
             <Input
               id="add-tgl"
@@ -208,20 +207,24 @@ export const AddDialog = ({
               value={formData.Tgl}
               onChange={(e) => handleChange("Tgl", e.target.value)}
               className={
-                errors.Tgl ? "border-red-500 focus-visible:ring-red-500/30" : ""
+                errors.Tgl
+                  ? "border-redBadgeText focus-visible:ring-redBadgeText/30"
+                  : ""
               }
             />
             {errors.Tgl && (
-              <p className="text-xs text-red-500 font-medium">{errors.Tgl}</p>
+              <p className="text-xs text-redBadgeText font-medium">
+                {errors.Tgl}
+              </p>
             )}
           </div>
 
           {/* Jumlah */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="add-jumlah" className="text-primaryText">
-              Jumlah <span className="text-red-500">*</span>
+              Jumlah <span className="text-redBadgeText">*</span>
               <span
-                className={`text-xs font-bold ml-1 ${tipe === "masuk" ? "text-green-500" : "text-red-500"}`}
+                className={`text-xs font-bold ml-1 ${tipe === "masuk" ? "text-greenBadgeText" : "text-redBadgeText"}`}
               >
                 ({tipe === "masuk" ? "+ Masuk" : "− Keluar"})
               </span>
@@ -235,14 +238,14 @@ export const AddDialog = ({
               placeholder="0"
               className={
                 errors.Jumlah
-                  ? "border-red-500 focus-visible:ring-red-500/30"
+                  ? "border-redBadgeText focus-visible:ring-redBadgeText/30"
                   : jumlah > 0
                     ? "border-mainColor/50"
                     : ""
               }
             />
             {errors.Jumlah && (
-              <p className="text-xs text-red-500 font-medium">
+              <p className="text-xs text-redBadgeText font-medium">
                 {errors.Jumlah}
               </p>
             )}
@@ -252,7 +255,7 @@ export const AddDialog = ({
           <div
             className={`rounded-xl px-4 py-3 flex items-center justify-between border-2 transition-all ${
               projectedStock < 0
-                ? "border-red-500/50 bg-red-500/5"
+                ? "border-redBadgeText/50 bg-redBadgeText/5"
                 : "border-mainColor/30 bg-mainColor/5"
             }`}
           >
@@ -271,7 +274,7 @@ export const AddDialog = ({
                 Stock Setelah
               </p>
               <p
-                className={`text-lg font-black ${projectedStock < 0 ? "text-red-500" : "text-mainColor"}`}
+                className={`text-lg font-black ${projectedStock < 0 ? "text-redBadgeText" : "text-mainColor"}`}
               >
                 {projectedStock.toLocaleString("id-ID")}{" "}
                 <span className="text-xs font-normal">{displayUnit}</span>
@@ -279,7 +282,7 @@ export const AddDialog = ({
             </div>
           </div>
           {projectedStock < 0 && (
-            <p className="text-xs text-red-500 font-medium -mt-2">
+            <p className="text-xs text-redBadgeText font-medium -mt-2">
               ⚠️ Stock akan minus! Pastikan jumlah keluar tidak melebihi stock
               saat ini.
             </p>

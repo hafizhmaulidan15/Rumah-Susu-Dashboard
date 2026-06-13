@@ -10,6 +10,8 @@ export const usePWA = () => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator))
       return;
 
+    const isDev = process.env.NODE_ENV === "development";
+
     const init = async () => {
       const [registrations, cacheNames] = await Promise.all([
         navigator.serviceWorker.getRegistrations(),
@@ -17,17 +19,21 @@ export const usePWA = () => {
       ]);
 
       await Promise.all([
-        ...registrations
-          .filter((r) => !r.active?.scriptURL?.endsWith(SW_URL))
-          .map((r) => r.unregister()),
+        ...registrations.map((r) => {
+          if (isDev || !r.active?.scriptURL?.endsWith(SW_URL)) {
+            return r.unregister();
+          }
+        }),
         ...cacheNames
           .filter((n) => !n.startsWith(SW_CACHE_PREFIX))
           .map((n) => caches.delete(n)),
       ]).catch(() => {});
 
-      try {
-        await navigator.serviceWorker.register(SW_URL);
-      } catch {}
+      if (!isDev) {
+        try {
+          await navigator.serviceWorker.register(SW_URL);
+        } catch {}
+      }
     };
 
     init();

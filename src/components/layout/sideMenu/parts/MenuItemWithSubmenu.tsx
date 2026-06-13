@@ -1,6 +1,6 @@
 "use client";
 
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
+import { AnimatePresence, motion } from "framer-motion";
 import { ReactElement, useCallback, useEffect, useRef, useState } from "react";
 
 import { ChevronDownIcon } from "@/assets/icons/ChevronDownIcon";
@@ -323,70 +323,99 @@ export const MenuItemWithSubmenu = ({
         )}
       </Tooltip>
       {!isCollapsed && (isSideMenuOpen || !isDesktop) && (
-        <CollapsiblePrimitive.Root
-          open={isExpanded}
-          onOpenChange={setIsExpanded}
-        >
-          <CollapsiblePrimitive.Content className="CollapsibleContent">
-            <div className="ml-[1.6rem] relative mt-[0.15rem] 1xl:-mt-[0.1rem] 3xl:-mt-[0.05rem]">
-              <div
-                ref={verticalLineRef}
-                className="absolute left-0 top-0 w-0.5 bg-submenuTreeLine"
-              ></div>
-              {submenuItems.map((item, index) => {
-                const normalizedPathname = currentPathname?.endsWith("/")
-                  ? currentPathname.slice(0, -1)
-                  : currentPathname;
-                const normalizedPath = item.path.endsWith("/")
-                  ? item.path.slice(0, -1)
-                  : item.path;
-                const isActive = normalizedPathname === normalizedPath;
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              key="submenu"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+              onAnimationComplete={() => {
+                const line = verticalLineRef.current;
+                if (!line) return;
+                const container = line.parentElement;
+                if (!container) return;
+                const lastItem = submenuRefs.current[submenuItems.length - 1];
+                if (!lastItem) return;
+                const containerTop = container.getBoundingClientRect().top;
+                const lastItemRect = lastItem.getBoundingClientRect();
+                const height =
+                  lastItemRect.top + lastItemRect.height / 2 - containerTop;
+                line.style.height = `${height}px`;
+              }}
+            >
+              <div className="ml-[1.6rem] relative mt-[0.15rem] 1xl:-mt-[0.1rem] 3xl:-mt-[0.05rem]">
+                <div
+                  ref={verticalLineRef}
+                  className="absolute left-0 top-0 w-0.5 bg-submenuTreeLine"
+                ></div>
+                {submenuItems.map((item, index) => {
+                  const normalizedPathname = currentPathname?.endsWith("/")
+                    ? currentPathname.slice(0, -1)
+                    : currentPathname;
+                  const normalizedPath = item.path.endsWith("/")
+                    ? item.path.slice(0, -1)
+                    : item.path;
+                  const isActive = normalizedPathname === normalizedPath;
 
-                return (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    tabIndex={0}
-                    target={item.newTab ? "_blank" : undefined}
-                    ref={(el: HTMLAnchorElement | null) => {
-                      submenuRefs.current[index] = el;
-                      if (el) el.setAttribute("tabindex", "0");
-                    }}
-                    className="block mb-px 1xl:mb-1 3xl:mb-[0.2rem] -ml-[1.6rem] w-[calc(100%+1.6rem)] rounded-md relative focus-visible:outline-offset-[-2px]"
-                  >
-                    <div className="absolute left-[calc(1.6rem+2px)] top-1/2 w-3 h-0.5 bg-submenuTreeLine"></div>
-                    <div
-                      onClick={handleMenuItemClick}
-                      className={`flex rounded-md items-center gap-2 py-2 1xl:py-[0.55rem] 3xl:py-[0.5rem] pl-[3.2rem] w-full pr-2 transition-all duration-200 relative ${
-                        isActive
-                          ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover"
-                          : "bg-navItemBg hover:bg-navItemBgHover"
-                      }`}
+                  return (
+                    <motion.div
+                      key={item.path}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.18,
+                        delay: index * 0.03,
+                        ease: "easeOut",
+                      }}
                     >
-                      {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-gradient-to-b from-mainColor to-mainColor/60" />
-                      )}
-                      {item.icon && (
-                        <span className="w-4 h-4 flex-shrink-0 stroke-grayIcon fill-grayIcon text-grayIcon">
-                          {item.icon}
-                        </span>
-                      )}
-                      <div
-                        className={`text-xs xl:text-xs 3xl:text-sm font-medium tracking-wide whitespace-nowrap ${
-                          isActive
-                            ? "text-navItemTextActive"
-                            : "text-navItemText"
-                        }`}
+                      <Link
+                        href={item.path}
+                        tabIndex={0}
+                        target={item.newTab ? "_blank" : undefined}
+                        ref={(el: HTMLAnchorElement | null) => {
+                          submenuRefs.current[index] = el;
+                          if (el) el.setAttribute("tabindex", "0");
+                        }}
+                        className="block mb-px 1xl:mb-1 3xl:mb-[0.2rem] -ml-[1.6rem] w-[calc(100%+1.6rem)] rounded-md relative focus-visible:outline-offset-[-2px]"
                       >
-                        {item.title}
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </CollapsiblePrimitive.Content>
-        </CollapsiblePrimitive.Root>
+                        <div className="absolute left-[calc(1.6rem+2px)] top-1/2 w-3 h-0.5 bg-submenuTreeLine"></div>
+                        <div
+                          onClick={handleMenuItemClick}
+                          className={`flex rounded-md items-center gap-2 py-2 1xl:py-[0.55rem] 3xl:py-[0.5rem] pl-[3.2rem] w-full pr-2 transition-all duration-200 relative ${
+                            isActive
+                              ? "bg-navItemActiveBg hover:bg-navItemActiveBgHover"
+                              : "bg-navItemBg hover:bg-navItemBgHover"
+                          }`}
+                        >
+                          {isActive && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-gradient-to-b from-mainColor to-mainColor/60" />
+                          )}
+                          {item.icon && (
+                            <span className="w-4 h-4 flex-shrink-0 stroke-grayIcon fill-grayIcon text-grayIcon">
+                              {item.icon}
+                            </span>
+                          )}
+                          <div
+                            className={`text-xs xl:text-xs 3xl:text-sm font-medium tracking-wide whitespace-nowrap ${
+                              isActive
+                                ? "text-navItemTextActive"
+                                : "text-navItemText"
+                            }`}
+                          >
+                            {item.title}
+                          </div>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
     </div>
   );
