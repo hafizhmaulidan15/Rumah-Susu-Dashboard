@@ -15,13 +15,28 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-const ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:4000"];
+const ALLOWED_ORIGINS: string[] = [
+  "http://localhost:3000",
+  "http://localhost:4000",
+];
 
-if (process.env.NEXT_PUBLIC_AUTH_URL) {
-  try {
-    const url = new URL(process.env.NEXT_PUBLIC_AUTH_URL);
-    ALLOWED_ORIGINS.push(url.origin);
-  } catch {}
+const strOrFallback = (v: string | undefined) =>
+  v ? (v.startsWith("http") ? v : `https://${v}`) : "";
+
+for (const raw of [
+  process.env.NEXT_PUBLIC_AUTH_URL,
+  process.env.NEXT_PUBLIC_SITE_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  process.env.VERCEL_BRANCH_URL
+    ? `https://${process.env.VERCEL_BRANCH_URL}`
+    : undefined,
+]) {
+  const url = strOrFallback(raw);
+  if (url) {
+    try {
+      ALLOWED_ORIGINS.push(new URL(url).origin);
+    } catch {}
+  }
 }
 
 export function isValidOrigin(request: Request): boolean {
